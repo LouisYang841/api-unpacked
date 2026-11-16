@@ -809,6 +809,7 @@ function goToChapter(index, moveFocus = true) {
     return;
   const blocked = firstIncompleteBefore(index);
   if (index > currentChapter && blocked !== null) {
+    refreshLessonGates();
     $('pageRequirement').textContent =
       '请先完成第 ' + (blocked + 1) + ' 步的全部练习，再继续。';
     history.replaceState(null, '', '#step-' + currentChapter);
@@ -1045,7 +1046,16 @@ function refreshLessonGates() {
   const items = requirements[currentChapter],
     pending = items.filter(([id]) => !requirementDone(id));
   const earlier = firstIncompleteBefore(currentChapter);
-  $('nextStep').disabled = pending.length > 0 || earlier !== null;
+  const locked = pending.length > 0 || earlier !== null;
+  const next = $('nextStep');
+  next.disabled = locked;
+  next.toggleAttribute('disabled', locked);
+  next.setAttribute('aria-disabled', String(locked));
+  next.setAttribute('aria-describedby', 'pageRequirement');
+  next.classList.toggle('is-locked', locked);
+  next.textContent = locked
+    ? '完成练习后继续 →'
+    : nextLabels[currentChapter] || '';
   $('pageRequirement').textContent =
     earlier !== null
       ? '第 ' + (earlier + 1) + ' 步还有未完成的练习，请先返回完成。'

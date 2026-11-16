@@ -1712,3 +1712,19 @@ button:disabled {
     font-size: 13px;
   }
 }
+/* Locked navigation must look disabled as well as block activation. */
+.page-controls #nextStep:disabled,
+.page-controls #nextStep.is-locked,
+.page-controls #nextStep:disabled:hover,
+.page-controls #nextStep.is-locked:hover {
+  background: #e4e9ed;
+  color: #82909a;
+  border: 1px solid #cbd4dc;
+  opacity: 1;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+.page-controls #nextStep:not(:disabled) {
+  border: 1px solid transparent;
+}

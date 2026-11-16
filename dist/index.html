@@ -1249,7 +1249,15 @@ Content-Type: application/json
         <button id="prevStep" class="secondary" disabled>← 上一步</button>
         <div>
           <span id="nextDescription">接下来：模拟申请 API Key</span
-          ><button id="nextStep" class="primary">下一步：领取教学密钥 →</button>
+          ><button
+            id="nextStep"
+            class="primary is-locked"
+            disabled
+            aria-disabled="true"
+            aria-describedby="pageRequirement"
+          >
+            完成练习后继续 →
+          </button>
         </div>
       </div>
       <p class="book-footer">

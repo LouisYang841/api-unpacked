@@ -41,6 +41,9 @@ assert(L.validateKey(teachingKey,new Set([replacementKey])).length,'Replacing a 
 assert(!html.includes('DEMO_KEY'),'Keep the teaching key consistent');
 assert(!html.includes('role="tablist"'),'Exercises should follow the lesson rather than require switching tabs');
 assert(ids.includes('prevStep')&&ids.includes('nextStep'),'Provide explicit sequential navigation');
+const initialNextButton=html.match(/<button\b[^>]*\bid="nextStep"[^>]*>/)?.[0]||'';
+assert(/\sdisabled(?:\s|>)/.test(initialNextButton),'Next must be disabled before JavaScript initializes');
+assert(initialNextButton.includes('aria-disabled="true"')&&initialNextButton.includes('is-locked'),'Initial accessibility and visual lock agree');
 for(const id of ['createKey','revokeKey','issuedKey','keyNameDialog','keyNameForm','keyName','revokeDialog','confirmRevoke','baseUrl','apiKey','fetchModels','connectionModel','saveConnection','testConnection','chatForm','sendChat','writeKey','scenario-ui','scenario-drag','scenario-write','playDemo','stepDemo'])assert(ids.includes(id),'Missing learning interaction '+id);
 assert(html.includes('data-slot="auth"'),'The drag request includes an authentication header');
 assert(ids.includes('pageRequirement')&&ids.includes('replayDemo'),'Lesson gate status and replay control exist');
