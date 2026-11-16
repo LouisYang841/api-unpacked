@@ -39,6 +39,9 @@ assert(!html.includes('role="tablist"'),'Exercises should follow the lesson rath
 assert(ids.includes('prevStep')&&ids.includes('nextStep'),'Provide explicit sequential navigation');
 for(const id of ['createKey','revokeKey','issuedKey','keyNameDialog','keyNameForm','keyName','revokeDialog','confirmRevoke','baseUrl','apiKey','fetchModels','connectionModel','saveConnection','testConnection','chatForm','sendChat','writeKey','scenario-ui','scenario-drag','scenario-write','playDemo','stepDemo'])assert(ids.includes(id),'Missing learning interaction '+id);
 assert(html.includes('data-slot="auth"'),'The drag request includes an authentication header');
+assert(ids.includes('pageRequirement')&&ids.includes('replayDemo'),'Lesson gate status and replay control exist');
+for(const rule of ['base','host','endpoint']){assert(html.includes('data-address-rule="'+rule+'"'),'All three address questions are visible');assert(ids.includes('address-feedback-'+rule)&&ids.includes('address-result-'+rule),'Each address question has independent feedback');}
+assert(!ids.includes('addressRule'),'Address questions must not be hidden behind a dropdown');
 assert(!/\b(?:fetch|XMLHttpRequest|WebSocket)\s*\(/.test(app),'All model calls remain simulated');
 console.log('通过：服务地址拼接、密钥签发与认证、连接配置、JSON 语法与语义、分步结构、模拟聊天与静态资源检查。');
 

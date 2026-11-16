@@ -1,5 +1,7 @@
 const $ = (id) => document.getElementById(id);
 const completed = new Set();
+const answeredQuestions = new Set();
+const rewardedQuestions = new Set();
 let activeKey = null;
 const validKeys = new Set();
 const keyRecords = [];
@@ -28,7 +30,7 @@ function feedback(id, errors, success) {
     box.textContent = success;
     completed.add(id);
     completedKeys.set(id, requestKeyFor(id));
-    celebrate(box);
+    rewardCorrectAnswer('exercise-' + id, box);
     updateProgress();
   }
 }
@@ -37,6 +39,7 @@ function updateProgress() {
   $('progressBar').style.width = (completed.size / 3) * 100 + '%';
   $('completion').hidden = completed.size !== 3;
   updateChapterMarks();
+  refreshLessonGates();
 }
 function uiBody() {
   return {
@@ -200,7 +203,8 @@ $('keyNameForm').addEventListener('submit', (event) => {
   $('keyReceipt').classList.remove('key-arrival');
   void $('keyReceipt').offsetWidth;
   $('keyReceipt').classList.add('key-arrival');
-  celebrate($('keyReceipt'));
+  rewardCorrectAnswer('key-created', $('keyReceipt'));
+  refreshLessonGates();
   $('issuedKey').focus();
 });
 $('copyKey').addEventListener('click', async () => {
@@ -302,30 +306,40 @@ function revokeTeachingKey(key) {
     validKeys.size +
     ' 把密钥继续有效。已填入的其他有效密钥无需更换。';
 }
-function resetAddressLab() {
-  $('addressFeedback').textContent =
-    '请按当前应用会补的路径，选一个合适的地址。';
-  $('addressResult').textContent = '等待选择地址';
-  document
-    .querySelectorAll('[data-address-choice]')
-    .forEach((b) => b.classList.remove('correct'));
-}
-$('addressRule').addEventListener('change', resetAddressLab);
-document.querySelectorAll('[data-address-choice]').forEach((b) =>
-  b.addEventListener('click', () => {
-    const rule = $('addressRule').value;
+document.querySelectorAll('[data-address-choice]').forEach((button) =>
+  button.addEventListener('click', () => {
+    const rule = button.dataset.rule,
+      id = 'address-' + rule;
+    if (answeredQuestions.has(id)) return;
     const correct =
-      b.dataset.addressChoice === Lesson.endpointRules[rule].expected;
-    $('addressResult').textContent = Lesson.composeEndpoint(
-      b.dataset.addressChoice,
+      button.dataset.addressChoice === Lesson.endpointRules[rule].expected;
+    const result = $('address-feedback-' + rule);
+    $('address-result-' + rule).textContent = Lesson.composeEndpoint(
+      button.dataset.addressChoice,
       rule,
     );
-    $('addressFeedback').textContent = correct
-      ? '选对了！应用补完路径后，刚好得到服务商给的完整 Endpoint。'
-      : '看看下面的最终地址：路径重复了，或者少了一段。换一个基础地址，使最终地址刚好等于完整 Endpoint。';
-    document
-      .querySelectorAll('[data-address-choice]')
-      .forEach((x) => x.classList.toggle('correct', x === b && correct));
+    if (correct) {
+      answeredQuestions.add(id);
+      result.textContent =
+        '回答正确。应用补完路径后，刚好得到服务商提供的完整 Endpoint。';
+      button.classList.add('correct');
+      document
+        .querySelectorAll('[data-rule="' + rule + '"]')
+        .forEach((b) => (b.disabled = true));
+      rewardCorrectAnswer(id, result);
+      refreshLessonGates();
+    } else {
+      result.textContent =
+        '请再检查：最终地址的路径重复了，或者缺少了一段。请根据本题的追加规则重新选择。';
+    }
+    const count = ['base', 'host', 'endpoint'].filter((r) =>
+      answeredQuestions.has('address-' + r),
+    ).length;
+    $('addressProgress').textContent =
+      '本节练习：已完成 ' +
+      count +
+      ' / 3 题。' +
+      (count === 3 ? '三题全部答对，可以继续。' : '请继续完成其余题目。');
   }),
 );
 const answers = {
@@ -778,6 +792,13 @@ function updateChapterMarks() {
 function goToChapter(index, moveFocus = true) {
   if (!Number.isInteger(index) || index < 0 || index >= chapterNames.length)
     return;
+  const blocked = firstIncompleteBefore(index);
+  if (index > currentChapter && blocked !== null) {
+    $('pageRequirement').textContent =
+      '请先完成第 ' + (blocked + 1) + ' 步的全部练习，再继续。';
+    history.replaceState(null, '', '#step-' + currentChapter);
+    return;
+  }
   currentChapter = index;
   if (index !== 0) stopDemo();
   visited.add(index);
@@ -797,10 +818,8 @@ function goToChapter(index, moveFocus = true) {
   document.querySelector('.contents').open = false;
   updateChapterMarks();
   history.replaceState(null, '', '#step-' + index);
-  if (index === 0 && !reducedMotion()) {
-    stopDemo();
-    startDemo();
-  }
+  if (index === 0 && !reducedMotion() && !demoUserPaused) resumeDemo();
+  refreshLessonGates();
   if (moveFocus) {
     $('heading-' + index).focus({ preventScroll: true });
     document.querySelector('.reading-progress').scrollIntoView({
@@ -931,7 +950,8 @@ const demoCaptions = [
   '响应逐段返回。应用把收到的文字显示在聊天窗口里。',
 ];
 let demoStage = 0,
-  demoTimer = null;
+  demoTimer = null,
+  demoUserPaused = false;
 function paintDemo() {
   document
     .querySelectorAll('[data-demo-stage]')
@@ -946,38 +966,129 @@ function stopDemo() {
     window.clearInterval(demoTimer);
     demoTimer = null;
   }
-  $('playDemo').textContent = '重新播放 ▶';
+  $('playDemo').textContent = '继续播放 ▶';
 }
-function startDemo() {
-  if (demoTimer !== null) {
-    stopDemo();
-    return;
-  }
-  demoStage = 0;
-  paintDemo();
+function resumeDemo() {
+  if (demoTimer !== null) return;
   $('playDemo').textContent = '暂停演示 Ⅱ';
   demoTimer = window.setInterval(() => {
-    demoStage++;
-    if (demoStage >= demoCaptions.length) {
-      demoStage = demoCaptions.length - 1;
-      stopDemo();
-      return;
-    }
+    demoStage = (demoStage + 1) % demoCaptions.length;
     paintDemo();
   }, 1800);
 }
-$('playDemo').addEventListener('click', startDemo);
+$('playDemo').addEventListener('click', () => {
+  if (demoTimer !== null) {
+    demoUserPaused = true;
+    stopDemo();
+  } else {
+    demoUserPaused = false;
+    resumeDemo();
+  }
+});
 $('stepDemo').addEventListener('click', () => {
+  demoUserPaused = true;
   stopDemo();
   demoStage = (demoStage + 1) % demoCaptions.length;
   paintDemo();
 });
+$('replayDemo').addEventListener('click', () => {
+  stopDemo();
+  demoStage = 0;
+  demoUserPaused = false;
+  paintDemo();
+  resumeDemo();
+});
 paintDemo();
+if (reducedMotion()) $('playDemo').textContent = '播放演示 ▶';
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) stopDemo();
+  else if (currentChapter === 0 && !demoUserPaused && !reducedMotion())
+    resumeDemo();
 });
+const requirements = {
+  0: [['concept-api', '完成 API 概念选择题']],
+  1: [['key-created', '命名并创建至少一把有效密钥']],
+  2: [
+    ['address-base', '答对应用 A 的地址题'],
+    ['address-host', '答对应用 B 的地址题'],
+    ['address-endpoint', '答对应用 C 的地址题'],
+  ],
+  3: [['exercise-ui', '完成保存、检测并发送聊天消息']],
+  4: [['concept-request', '答对请求组成选择题']],
+  5: [['exercise-drag', '填对请求头与 JSON 卡片']],
+  6: [['exercise-write', '填对认证密钥与 JSON']],
+  7: [['concept-errors', '答对认证故障选择题']],
+  8: [],
+};
+function requirementDone(id) {
+  if (id === 'key-created') return validKeys.size > 0;
+  if (id.startsWith('exercise-')) return completed.has(id.slice(9));
+  return answeredQuestions.has(id);
+}
+function firstIncompleteBefore(index) {
+  for (let i = 0; i < index; i++) {
+    if (requirements[i].some(([id]) => !requirementDone(id))) return i;
+  }
+  return null;
+}
+function refreshLessonGates() {
+  const items = requirements[currentChapter],
+    pending = items.filter(([id]) => !requirementDone(id));
+  const earlier = firstIncompleteBefore(currentChapter);
+  $('nextStep').disabled = pending.length > 0 || earlier !== null;
+  $('pageRequirement').textContent =
+    earlier !== null
+      ? '第 ' + (earlier + 1) + ' 步还有未完成的练习，请先返回完成。'
+      : pending.length
+        ? '本页还需完成：' + pending.map(([, name]) => name).join('；') + '。'
+        : items.length
+          ? '本页练习全部完成，可以继续。'
+          : '本页没有待答题目，可以继续学习。';
+  $('pageRequirement').classList.toggle(
+    'requirements-complete',
+    pending.length === 0 && earlier === null,
+  );
+  document.querySelectorAll('[data-go]').forEach((button) => {
+    const target = Number(button.dataset.go),
+      locked =
+        target > currentChapter && firstIncompleteBefore(target) !== null;
+    button.disabled = locked;
+    button.setAttribute('aria-disabled', String(locked));
+    button.title = locked ? '请先完成前面各页的练习。' : '';
+  });
+}
+function rewardCorrectAnswer(id, element) {
+  if (rewardedQuestions.has(id)) return;
+  rewardedQuestions.add(id);
+  celebrate(element);
+  if (!reducedMotion()) {
+    try {
+      window.navigator.vibrate?.(18);
+    } catch {}
+  }
+}
+document.querySelectorAll('button[data-question]').forEach((button) =>
+  button.addEventListener('click', () => {
+    const id = button.dataset.question;
+    if (answeredQuestions.has(id)) return;
+    const result = $('result-' + id);
+    if (button.dataset.correct === 'true') {
+      answeredQuestions.add(id);
+      result.textContent = '回答正确。' + result.dataset.explanation;
+      button.classList.add('correct');
+      document
+        .querySelectorAll('button[data-question="' + id + '"]')
+        .forEach((b) => (b.disabled = true));
+      rewardCorrectAnswer(id, result);
+      refreshLessonGates();
+    } else {
+      result.textContent = '请再想一想。' + result.dataset.explanation;
+    }
+  }),
+);
 const initial = /^#step-([0-8])$/.exec(location.hash);
-goToChapter(initial ? Number(initial[1]) : 0, false);
+const requestedInitial = initial ? Number(initial[1]) : 0;
+goToChapter(firstIncompleteBefore(requestedInitial) ?? requestedInitial, false);
 window.addEventListener('hashchange', () => {
   const match = /^#step-([0-8])$/.exec(location.hash);
   if (match) goToChapter(Number(match[1]));

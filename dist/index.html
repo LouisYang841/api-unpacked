@@ -118,7 +118,7 @@
         <div class="explain-animation">
           <div class="animation-head">
             <strong>看一次“发送消息”的全过程</strong
-            ><span>进入本节自动演示</span>
+            ><span>自动循环 · 可暂停和继续</span>
           </div>
           <div class="animation-track" id="animationTrack">
             <div class="demo-station" data-demo-stage="0">
@@ -140,9 +140,11 @@
           </p>
           <div class="animation-actions">
             <button id="playDemo" class="secondary" type="button">
-              播放一次对话 ▶</button
+              暂停演示 Ⅱ</button
             ><button id="stepDemo" class="text-button" type="button">
-              逐步看下一段 →
+              逐步看下一段 →</button
+            ><button id="replayDemo" type="button" class="text-button">
+              从头播放 ↺
             </button>
           </div>
         </div>
@@ -195,6 +197,36 @@
           换应用也不等于自动迁移聊天记录或会员权益。API
           额度通常单独管理；是否支持导入旧对话，要看具体应用。
         </p>
+        <div data-question="concept-api" class="quick-check">
+          <span class="small-label">本节练习 · 请选择一项</span>
+          <h3>检查理解：连接第三方聊天应用时，主要需要准备什么？</h3>
+          <div class="quiz-options">
+            <button
+              data-question="concept-api"
+              data-correct="true"
+              type="button"
+            >
+              服务地址、API Key 和模型名称</button
+            ><button
+              data-question="concept-api"
+              data-correct="false"
+              type="button"
+            >
+              只需要官方聊天应用的登录密码</button
+            ><button
+              data-question="concept-api"
+              data-correct="false"
+              type="button"
+            >
+              把旧聊天记录粘贴进设置即可
+            </button>
+          </div>
+          <p
+            id="result-concept-api"
+            role="status"
+            data-explanation="服务地址决定请求发到哪里，API Key 用于认证，模型名称决定使用哪个模型。"
+          ></p>
+        </div>
         <p class="transition">继续学习：先到模拟服务商控制台领一把调用密钥。</p>
       </section>
       <section
@@ -347,40 +379,141 @@ API 基础地址：https://api.example.com/v1
           >内置服务商常常已填好地址；自定义服务需要核对接口类型、应用版本和字段说明。不要凭经验一律添加或删除
           <code>/v1</code>。
         </p>
-        <h3>③ 试着判断：这个应用应该填哪一个？</h3>
+        <h3>③ 动手操作：分别完成下面三道题</h3>
         <div class="address-lab">
-          <label
-            >模拟应用的地址规则<select id="addressRule">
-              <option value="base">应用 A：自动补 /chat/completions</option>
-              <option value="host">应用 B：自动补 /v1/chat/completions</option>
-              <option value="endpoint">
-                应用 C：不补路径，使用完整 Endpoint
-              </option>
-            </select></label
-          >
-          <div class="quiz-options">
-            <button
-              class="address-choice"
-              data-address-choice="https://api.example.com"
-            >
-              https://api.example.com</button
-            ><button
-              class="address-choice"
-              data-address-choice="https://api.example.com/v1"
-            >
-              https://api.example.com/v1</button
-            ><button
-              class="address-choice"
-              data-address-choice="https://api.example.com/v1/chat/completions"
-            >
-              https://api.example.com/v1/chat/completions
-            </button>
-          </div>
-          <p id="addressFeedback" role="status">
-            应用 A 会补 /chat/completions。先选一个地址，看看拼接结果。
+          <p class="field-help">
+            共 3
+            题，全部显示在下方。请分别选出正确的填写地址，三题全部答对后即可进入下一页。
           </p>
-          <p class="small-label">应用最终会请求：</p>
-          <code id="addressResult">等待选择地址</code>
+          <fieldset class="address-question" data-address-rule="base">
+            <legend>第 1 题／共 3 题 · 应用 A</legend>
+            <p>
+              应用 A的地址规则：<strong>自动补上 /chat/completions</strong
+              >。应填写下面哪个地址？
+            </p>
+            <div class="quiz-options">
+              <button
+                type="button"
+                class="address-choice"
+                data-address-choice="https://api.example.com"
+                data-rule="base"
+              >
+                https://api.example.com</button
+              ><button
+                type="button"
+                class="address-choice"
+                data-address-choice="https://api.example.com/v1"
+                data-rule="base"
+              >
+                https://api.example.com/v1</button
+              ><button
+                type="button"
+                class="address-choice"
+                data-address-choice="https://api.example.com/v1/chat/completions"
+                data-rule="base"
+              >
+                https://api.example.com/v1/chat/completions
+              </button>
+            </div>
+            <p
+              class="address-feedback"
+              id="address-feedback-base"
+              role="status"
+            >
+              请选择一个地址，观察拼接结果。
+            </p>
+            <p class="small-label">应用最终请求的完整地址：</p>
+            <code id="address-result-base" class="address-result"
+              >等待选择</code
+            >
+          </fieldset>
+          <fieldset class="address-question" data-address-rule="host">
+            <legend>第 2 题／共 3 题 · 应用 B</legend>
+            <p>
+              应用 B的地址规则：<strong>自动补上 /v1/chat/completions</strong
+              >。应填写下面哪个地址？
+            </p>
+            <div class="quiz-options">
+              <button
+                type="button"
+                class="address-choice"
+                data-address-choice="https://api.example.com"
+                data-rule="host"
+              >
+                https://api.example.com</button
+              ><button
+                type="button"
+                class="address-choice"
+                data-address-choice="https://api.example.com/v1"
+                data-rule="host"
+              >
+                https://api.example.com/v1</button
+              ><button
+                type="button"
+                class="address-choice"
+                data-address-choice="https://api.example.com/v1/chat/completions"
+                data-rule="host"
+              >
+                https://api.example.com/v1/chat/completions
+              </button>
+            </div>
+            <p
+              class="address-feedback"
+              id="address-feedback-host"
+              role="status"
+            >
+              请选择一个地址，观察拼接结果。
+            </p>
+            <p class="small-label">应用最终请求的完整地址：</p>
+            <code id="address-result-host" class="address-result"
+              >等待选择</code
+            >
+          </fieldset>
+          <fieldset class="address-question" data-address-rule="endpoint">
+            <legend>第 3 题／共 3 题 · 应用 C</legend>
+            <p>
+              应用 C的地址规则：<strong>不补路径，直接使用完整 Endpoint</strong
+              >。应填写下面哪个地址？
+            </p>
+            <div class="quiz-options">
+              <button
+                type="button"
+                class="address-choice"
+                data-address-choice="https://api.example.com"
+                data-rule="endpoint"
+              >
+                https://api.example.com</button
+              ><button
+                type="button"
+                class="address-choice"
+                data-address-choice="https://api.example.com/v1"
+                data-rule="endpoint"
+              >
+                https://api.example.com/v1</button
+              ><button
+                type="button"
+                class="address-choice"
+                data-address-choice="https://api.example.com/v1/chat/completions"
+                data-rule="endpoint"
+              >
+                https://api.example.com/v1/chat/completions
+              </button>
+            </div>
+            <p
+              class="address-feedback"
+              id="address-feedback-endpoint"
+              role="status"
+            >
+              请选择一个地址，观察拼接结果。
+            </p>
+            <p class="small-label">应用最终请求的完整地址：</p>
+            <code id="address-result-endpoint" class="address-result"
+              >等待选择</code
+            >
+          </fieldset>
+          <p id="addressProgress" class="address-progress" role="status">
+            本节练习：已完成 0 / 3 题。请依次回答上方三道题。
+          </p>
         </div>
         <div class="remember">
           <b>本节小结</b>
@@ -584,7 +717,7 @@ API 基础地址：https://api.example.com/v1
         </div>
         <p>
           <button class="secondary" data-go="8">
-            先看真实应用的迁移清单 →
+            完成各节练习后，查看迁移清单 →
           </button>
         </p>
         <p class="transition">
@@ -705,6 +838,36 @@ Content-Type: application/json
           现在你看到的
           JSON，与上一页表单表达的是同一个任务。换的是写法，提问没有变。密钥仍然留在请求头里。
         </p>
+        <div data-question="concept-request" class="quick-check">
+          <span class="small-label">本节练习 · 请选择一项</span>
+          <h3>检查理解：本课示例中的 API Key 应放在哪里？</h3>
+          <div class="quiz-options">
+            <button
+              data-question="concept-request"
+              data-correct="false"
+              type="button"
+            >
+              放在 JSON 的 content 里</button
+            ><button
+              data-question="concept-request"
+              data-correct="true"
+              type="button"
+            >
+              放在 Authorization 请求头中</button
+            ><button
+              data-question="concept-request"
+              data-correct="false"
+              type="button"
+            >
+              替换 model 字段的模型名称
+            </button>
+          </div>
+          <p
+            id="result-concept-request"
+            role="status"
+            data-explanation="本课的认证信息放在 Authorization 请求头中，JSON 正文负责模型与消息。"
+          ></p>
+        </div>
         <p class="transition">继续学习：结构已经写好，你只需放入三张卡片。</p>
       </section>
       <section
@@ -1081,6 +1244,36 @@ Content-Type: application/json
             </tbody>
           </table>
         </div>
+        <div data-question="concept-errors" class="quick-check">
+          <span class="small-label">本节练习 · 请选择一项</span>
+          <h3>检查理解：出现 401 认证失败时，应优先检查什么？</h3>
+          <div class="quiz-options">
+            <button
+              data-question="concept-errors"
+              data-correct="false"
+              type="button"
+            >
+              把提问写得更长</button
+            ><button
+              data-question="concept-errors"
+              data-correct="false"
+              type="button"
+            >
+              修改模型回复的颜色</button
+            ><button
+              data-question="concept-errors"
+              data-correct="true"
+              type="button"
+            >
+              密钥是否有效，以及认证格式是否正确
+            </button>
+          </div>
+          <p
+            id="result-concept-errors"
+            role="status"
+            data-explanation="401 通常与认证有关。先核对密钥是否完整、是否已撤销，以及应用要求的认证格式。"
+          ></p>
+        </div>
         <p class="transition">
           继续学习：最后一步，把这次练习连到真实的 API 工具上。
         </p>
@@ -1179,6 +1372,7 @@ Content-Type: application/json
           </p>
         </details>
       </section>
+      <p id="pageRequirement" class="page-requirement" role="status"></p>
       <div class="page-controls">
         <button id="prevStep" class="secondary" disabled>← 上一步</button>
         <div>

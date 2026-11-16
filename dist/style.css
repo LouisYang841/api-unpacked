@@ -1623,3 +1623,92 @@ input[aria-invalid='true'] {
     font-size: 12px;
   }
 }
+.page-requirement {
+  font-size: 13px;
+  line-height: 1.9;
+  background: #fff6e7;
+  border: 1px solid #e7d8ba;
+  color: #97703d;
+  border-radius: 6px;
+  padding: 12px 15px;
+  margin: 25px 0 0;
+}
+.page-requirement.requirements-complete {
+  background: #eff8f1;
+  border-color: #cce2d1;
+  color: #4d815e;
+}
+.address-progress {
+  font-size: 12px;
+  color: #567e95;
+  border-top: 1px solid #d3e4ef;
+  padding-top: 12px;
+}
+.quick-check [role='status'],
+#addressFeedback {
+  position: relative;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.contents button[aria-disabled='true']:after {
+  content: ' · 未解锁';
+  font-size: 10px;
+  color: #9caab2;
+}
+.page-controls .primary:disabled:hover {
+  background: #287fb4;
+}
+.quick-check .correct:disabled {
+  opacity: 1;
+  border-color: #76a77d;
+  background: #deefde;
+}
+.quick-check {
+  position: relative;
+}
+.address-question {
+  border: 1px solid #cddfeb;
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 24px 0;
+  min-width: 0;
+}
+.address-question legend {
+  padding: 0 8px;
+  font-size: 14px;
+  font-weight: 650;
+  color: #376c8d;
+}
+.address-question > p:first-of-type {
+  font-size: 13px;
+  margin-top: 4px;
+}
+.address-feedback {
+  font-size: 13px;
+  color: #496f87;
+  position: relative;
+}
+.address-result {
+  display: block;
+  background: #f0f5f9;
+  padding: 12px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.address-question .correct:disabled {
+  opacity: 1;
+  background: #deefde;
+  border-color: #76a77d;
+}
+@media (max-width: 600px) {
+  .address-question {
+    padding: 13px;
+    margin: 24px 0;
+  }
+  .address-question legend {
+    font-size: 13px;
+  }
+}
