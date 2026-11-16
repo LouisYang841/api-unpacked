@@ -16,7 +16,9 @@
       <header class="book-header">
         <p class="book-label">从官方聊天应用出发 · 零基础迁移教程</p>
         <h1>把模型接到第三方聊天应用</h1>
-        <p>学会填地址和密钥，完成第一次对话，再看懂背后的请求。</p>
+        <p>
+          依次完成“观察示例—动手操作—检查结果”，学习在第三方应用中连接模型。
+        </p>
       </header>
       <div class="reading-progress">
         <span id="chapterProgress">当前：第 1 步 / 共 9 步</span
@@ -94,10 +96,10 @@
         aria-labelledby="heading-0"
       >
         <div class="chapter-number">第 1 步 / 共 9 步</div>
-        <h2 id="heading-0" tabindex="-1">换一个聊天应用，模型从哪里来？</h2>
+        <h2 id="heading-0" tabindex="-1">第一节　认识聊天应用、服务商与 API</h2>
         <div class="explain-box">
           <strong
-            >本课目标：把服务商的模型，接到你想用的第三方聊天应用。</strong
+            >学习目标：认识应用、服务商、API、请求和响应之间的关系。</strong
           >
           <p>
             你可能习惯直接打开官方应用聊天。换到第三方聊天应用后，界面换了，但它仍然需要连接一个模型服务。你通常需要准备<strong
@@ -115,7 +117,8 @@
         </div>
         <div class="explain-animation">
           <div class="animation-head">
-            <strong>看一次“发送消息”的全过程</strong><span>教学动画</span>
+            <strong>看一次“发送消息”的全过程</strong
+            ><span>进入本节自动演示</span>
           </div>
           <div class="animation-track" id="animationTrack">
             <div class="demo-station" data-demo-stage="0">
@@ -182,7 +185,7 @@
           JSON，也不需要手动设置 HTTP 方法。
         </p>
         <div class="remember">
-          <b>先完成连接，再理解原理</b>
+          <b>本节小结</b>
           <p>
             前四步带你领取教学密钥、分清地址、配置应用。后面再拆开应用生成的请求，保留卡片和
             JSON 拓展练习。
@@ -192,7 +195,7 @@
           换应用也不等于自动迁移聊天记录或会员权益。API
           额度通常单独管理；是否支持导入旧对话，要看具体应用。
         </p>
-        <p class="transition">下一步，先到模拟服务商控制台领一把调用密钥。</p>
+        <p class="transition">继续学习：先到模拟服务商控制台领一把调用密钥。</p>
       </section>
       <section
         class="chapter"
@@ -202,11 +205,9 @@
         hidden
       >
         <div class="chapter-number">第 2 步 / 共 9 步</div>
-        <h2 id="heading-1" tabindex="-1">先在服务商控制台，创建一把 API Key</h2>
+        <h2 id="heading-1" tabindex="-1">第二节　创建并管理 API 密钥</h2>
         <div class="explain-box">
-          <strong
-            >这一小步：模拟“创建密钥 → 收到密钥 → 带到应用中使用”。</strong
-          >
+          <strong>学习目标：学会命名、创建、复制和撤销 API 密钥。</strong>
           <p>
             API Key
             是服务商签发的秘密凭证。服务收到请求后用它验证调用权限，并关联额度和用量。<strong
@@ -214,7 +215,8 @@
             >
           </p>
           <p>
-            下面是虚构控制台。每点一次“创建教学密钥”就新增一把，可分别用于不同应用或练习；已有密钥保持有效，直到你单独撤销它。
+            本节使用模拟控制台。操作顺序为：点击“创建密钥”→ 填写名称 → 确认创建
+            → 复制密钥。多把密钥可分别用于不同应用，未撤销的密钥持续有效。
           </p>
         </div>
         <div class="provider-console">
@@ -231,10 +233,12 @@
             <p>可用模型 ID：<code>demo-small</code></p>
           </div>
           <button class="primary" id="createKey" type="button">
-            创建教学密钥
+            ＋ 创建 API 密钥
           </button>
           <div id="keyReceipt" hidden>
-            <p class="issued-label">已创建 · 本次练习可用</p>
+            <p id="issuedKeyLabel" class="issued-label">
+              已创建 · 本次练习可用
+            </p>
             <label
               >收到的 API Key<input
                 id="issuedKey"
@@ -249,8 +253,7 @@
               撤销当前查看的密钥
             </button>
             <p class="fineprint">
-              随机生成的 demo-key-
-              开头字符串只在当前页面模拟中有效，多把密钥可以并存。刷新页面后全部失效。真实服务商可能只展示一次密钥，请按其说明安全保存。
+              请区分密钥名称与密钥值。真实平台可能只显示一次密钥值；为方便练习，本页允许再次查看。教学密钥仅在本页有效，刷新后全部失效。
             </p>
           </div>
           <p id="keyIssueStatus" role="status">
@@ -260,6 +263,10 @@
             <p>
               <strong>教学密钥列表</strong>
               <span id="keyCount">0 把有效 / 共创建 0 把</span>
+            </p>
+            <p class="field-help">
+              列表显示名称、创建时间及密钥末尾字符；请选择“查看 /
+              用于示范”读取教学密钥。
             </p>
             <ul id="keyList" class="key-list"></ul>
             <p class="field-help">
@@ -275,14 +282,14 @@
           如果泄露，到官方控制台撤销并更换密钥；只删除公开文字不能让旧密钥失效。不同服务商的密钥通常不能互换，<strong>地址与密钥要来自你准备连接的同一家服务</strong>。
         </p>
         <div class="remember">
-          <b>应用里的 Key 输入框，通常只填密钥本身</b>
+          <b>本节小结</b>
           <p>
             只粘贴上方收到的密钥本身，不用自己加 <code>Bearer</code> 或
             <code>Authorization:</code>。请求头通常由应用生成，稍后会演示。
           </p>
         </div>
         <p class="transition">
-          密钥领到了。下一步，看看 API 地址应该复制哪一段。
+          继续学习：密钥领到了。下一步，看看 API 地址应该复制哪一段。
         </p>
       </section>
       <section
@@ -293,11 +300,9 @@
         hidden
       >
         <div class="chapter-number">第 3 步 / 共 9 步</div>
-        <h2 id="heading-2" tabindex="-1">
-          Base URL 和完整 Endpoint，不一定填同一个值
-        </h2>
+        <h2 id="heading-2" tabindex="-1">第三节　确定 API 地址的填写方式</h2>
         <div class="explain-box">
-          <strong>这一小步：按应用的地址规则填写，不是见到链接就粘贴。</strong>
+          <strong>学习目标：能根据应用追加的路径，选择正确的 Base URL。</strong>
           <p>
             服务商给的<strong>完整 Endpoint</strong
             >是最终请求的目标；应用设置里的
@@ -378,7 +383,7 @@ API 基础地址：https://api.example.com/v1
           <code id="addressResult">等待选择地址</code>
         </div>
         <div class="remember">
-          <b>本课下一步使用应用 A 的规则</b>
+          <b>本节小结</b>
           <p>
             <code>https://api.example.com/v1</code> +
             <code>/chat/completions</code><br />＝
@@ -399,7 +404,7 @@ API 基础地址：https://api.example.com/v1
           >。本课的 A / B / C 均为教学模型，不是某款软件的截图。
         </p>
         <p class="transition">
-          现在，把领到的密钥和正确的基础地址，一起填到模拟聊天应用。
+          继续学习：把领到的密钥和正确的基础地址，一起填到模拟聊天应用。
         </p>
       </section>
       <section
@@ -410,21 +415,19 @@ API 基础地址：https://api.example.com/v1
         hidden
       >
         <div class="chapter-number">第 4 步 / 共 9 步</div>
-        <h2 id="heading-3" tabindex="-1">
-          练习一：像配置第三方应用一样，连接模型
-        </h2>
+        <h2 id="heading-3" tabindex="-1">第四节　在第三方应用中完成连接</h2>
         <div class="explain-box">
-          <strong>主线练习：填地址、填密钥、选模型。</strong>
+          <strong>学习目标：完成连接设置，并发送第一条消息。</strong>
           <p>
-            真实应用中，通常先在“设置 → 服务商 /
-            模型”里选内置服务，或添加自定义服务。<strong>接口类型必须与服务商支持的格式一致</strong>；它不是模型名。内置服务的默认地址正确时可以保留。
+            先选择服务商及接口类型，再填写地址和密钥。本例已选好接口类型，需填写的内容仍是地址、密钥和模型三项。
           </p>
           <p>
-            下面已替你选好教学服务和接口类型。只补三个空位，再点击检测连接。这里不会发送真实网络请求。
+            请按顺序操作：获取模型列表 → 选择模型 → 保存配置 → 检测连接 →
+            在聊天窗口点击“发送”。各按钮完成不同任务，请观察每一步的状态变化。
           </p>
         </div>
         <div class="provider-facts">
-          <strong>从刚才的服务商控制台抄到这里</strong>
+          <strong>观察示例：对照服务商提供的信息</strong>
           <p>
             基础地址：<code>https://api.example.com/v1</code
             ><br />密钥：在上一步模拟创建并领取<br />模型 ID：<code
@@ -432,6 +435,13 @@ API 基础地址：https://api.example.com/v1
             >
           </p>
         </div>
+        <h3>动手操作：完成一次连接</h3>
+        <ol class="instructions">
+          <li>填写服务商的基础地址，粘贴任意一把有效教学密钥。</li>
+          <li>点击“获取模型列表”，再选择 demo-small。</li>
+          <li>点击“保存配置”。保存成功后，再点击“检测连接”。</li>
+          <li>观察连接成功提示，然后到下方聊天窗口点击“发送”。</li>
+        </ol>
         <div class="exercise" id="panel-ui">
           <div class="task">
             <span class="task-icon">⚙</span>
@@ -480,23 +490,44 @@ API 基础地址：https://api.example.com/v1
               显示教学密钥
             </button>
             <button class="text-button" type="button" data-go="1">
-              返回控制台领取密钥</button
-            ><label
+              返回控制台领取密钥
+            </button>
+            <div class="model-fetch">
+              <button id="fetchModels" type="button" class="secondary">
+                获取模型列表</button
+              ><span id="modelStatus" role="status"
+                >填写地址和密钥后，获取服务商提供的模型。</span
+              >
+            </div>
+            <label
               >③ 模型 / Model ID<span class="fill-tag">你来选</span
-              ><select id="connectionModel">
-                <option value="">选择服务商提供的模型</option>
-                <option value="demo-small">demo-small</option>
-                <option value="another-model">
-                  another-model（其他服务的示例名称）
-                </option>
+              ><select disabled id="connectionModel">
+                <option value="">请先获取模型列表</option>
               </select></label
             >
             <p class="field-help">
               真实应用可能先点“获取模型列表”，再添加并启用模型；没有列表时，按服务商文档填写精确的模型
               ID。
             </p>
-            <div class="preset">已准备好的测试消息：用一句话解释彩虹。</div>
-            <button type="submit" class="primary">检测连接并模拟对话 →</button>
+            <label class="enable-provider"
+              ><input id="providerEnabled" type="checkbox" checked />
+              启用此服务商</label
+            >
+            <div class="connection-actions">
+              <button id="saveConnection" type="submit" class="primary">
+                保存配置</button
+              ><button
+                id="testConnection"
+                type="button"
+                class="secondary"
+                disabled
+              >
+                检测连接
+              </button>
+            </div>
+            <p id="connectionStatus" role="status">
+              请先填写地址与密钥，再获取模型列表。
+            </p>
           </form>
           <div
             id="scenario-ui"
@@ -514,6 +545,20 @@ API 基础地址：https://api.example.com/v1
             <div class="chat-messages" id="chat-messages-ui">
               <p class="chat-empty">发送后，你的消息和模型回复会出现在这里。</p>
             </div>
+            <form id="chatForm" class="chat-composer">
+              <label for="chatPrompt">练习消息</label>
+              <div>
+                <input
+                  id="chatPrompt"
+                  value="用一句话解释彩虹。"
+                  readonly
+                  aria-label="本题已准备好的用户消息"
+                /><button id="sendChat" type="submit" class="primary" disabled>
+                  发送 ↑
+                </button>
+              </div>
+              <small>检测连接成功后，即可发送本题消息。</small>
+            </form>
             <div class="stream-note">
               模拟流式效果用于展示分段接收回答，不会调用真实模型。
             </div>
@@ -532,9 +577,9 @@ API 基础地址：https://api.example.com/v1
           </div>
         </div>
         <div class="remember">
-          <b>到这里，你已经练过第三方应用的核心设置</b>
+          <b>检查结果</b>
           <p>
-            平时只要在应用里选中刚添加的模型，就可以聊天。保存连接不等于迁移了旧记录；也不用在每次提问里重填密钥。
+            若聊天窗口先出现用户消息，随后逐段显示模型回答，说明本次模拟连接已完成。保存配置只是保存连接信息，并不等于已经发送消息，也不会自动导入旧聊天记录。
           </p>
         </div>
         <p>
@@ -543,7 +588,7 @@ API 基础地址：https://api.example.com/v1
           </button>
         </p>
         <p class="transition">
-          也可以继续下一步：拆开应用自动生成的请求，理解地址、密钥和提问分别去了哪里。
+          继续学习：拆开应用自动生成的请求，理解地址、密钥和提问分别去了哪里。
         </p>
       </section>
       <section
@@ -554,9 +599,11 @@ API 基础地址：https://api.example.com/v1
         hidden
       >
         <div class="chapter-number">第 5 步 / 共 9 步</div>
-        <h2 id="heading-4" tabindex="-1">填完设置后，应用怎样组成一条请求？</h2>
+        <h2 id="heading-4" tabindex="-1">第五节　认识一条请求的组成</h2>
         <div class="explain-box">
-          <strong>理解原理：你填的是设置，应用发的是请求。</strong>
+          <strong
+            >学习目标：能说明地址、认证请求头和 JSON 正文各自的作用。</strong
+          >
           <p>
             Base URL 负责拼出目标地址；API Key
             变成认证请求头；你选的模型和聊天内容进入 JSON 正文。<strong
@@ -605,7 +652,7 @@ Content-Type: application/json
           是本例使用的认证方式；其他接口可能使用不同的请求头。
         </p>
         <div class="explain-box">
-          <strong>这一小步：学会读 JSON，不用背语法。</strong>
+          <strong>知识补充：用 JSON 表示消息内容。</strong>
           <p>
             表单方便人填写；模型服务需要能按约定读取的数据。<strong
               >JSON 是一种有固定写法的文本数据格式。</strong
@@ -648,7 +695,7 @@ Content-Type: application/json
   ]
 }</pre>
         <div class="remember">
-          <b>本步只记三件事</b>
+          <b>本节小结</b>
           <p>
             <code>{ }</code> 把一组字段放在一起；<code>[ ]</code>
             放多条消息；文字用英文双引号，项目之间用英文逗号，最后一项后面不加逗号。
@@ -658,7 +705,7 @@ Content-Type: application/json
           现在你看到的
           JSON，与上一页表单表达的是同一个任务。换的是写法，提问没有变。密钥仍然留在请求头里。
         </p>
-        <p class="transition">下一步，结构已经写好，你只需放入三张卡片。</p>
+        <p class="transition">继续学习：结构已经写好，你只需放入三张卡片。</p>
       </section>
       <section
         class="chapter"
@@ -668,9 +715,11 @@ Content-Type: application/json
         hidden
       >
         <div class="chapter-number">第 6 步 / 共 9 步</div>
-        <h2 id="heading-5" tabindex="-1">练习二：把三张卡片放回 JSON</h2>
+        <h2 id="heading-5" tabindex="-1">练习二　补全请求头与 JSON 正文</h2>
         <div class="explain-box">
-          <strong>拓展练习：认证请求头与 JSON 正文一起拼。</strong>
+          <strong
+            >学习目标：能将密钥放入认证请求头，将模型与提问放入正文。</strong
+          >
           <p>
             正文仍然提问“用一句话解释彩虹。”。这次三个空位分别是：教学密钥、选择模型的字段名、提问内容。
           </p>
@@ -775,7 +824,7 @@ Content-Type: application/json
           </div>
         </div>
         <div class="remember">
-          <b>做完后核对</b>
+          <b>本节小结</b>
           <p>
             没有密钥，即使 JSON
             完全正确也可能无法通过身份验证。密钥放在请求头；model 与 messages
@@ -783,7 +832,7 @@ Content-Type: application/json
           </p>
         </div>
         <p class="transition">
-          下一步会保留同样的结构，只把提问从“彩虹”换成“月食”。
+          继续学习：下一步会保留同样的结构，只把提问从“彩虹”换成“月食”。
         </p>
       </section>
       <section
@@ -794,9 +843,11 @@ Content-Type: application/json
         hidden
       >
         <div class="chapter-number">第 7 步 / 共 9 步</div>
-        <h2 id="heading-6" tabindex="-1">练习三：亲手修改三个值</h2>
+        <h2 id="heading-6" tabindex="-1">练习三　填写密钥并修改 JSON</h2>
         <div class="explain-box">
-          <strong>拓展练习：带上密钥，再修改 JSON 中的两个值。</strong>
+          <strong
+            >学习目标：能填写认证信息，并在已有 JSON 中修改两个值。</strong
+          >
           <p>
             三处要填：上方的 API Key、JSON 中的模型名和提问内容。角色
             user、括号和其他字段都已写好。
@@ -897,14 +948,14 @@ Content-Type: application/json
           </div>
         </div>
         <div class="remember">
-          <b>做完后核对</b>
+          <b>本节小结</b>
           <p>
             这次请求改变的是提问内容。换一个问题，并不意味着需要重写地址、请求头或整个
             JSON 结构。
           </p>
         </div>
         <p class="transition">
-          你已经会准备请求了。下一步，学会从返回的数据里找答案。
+          继续学习：你已经会准备请求了。下一步，学会从返回的数据里找答案。
         </p>
       </section>
       <section
@@ -915,11 +966,9 @@ Content-Type: application/json
         hidden
       >
         <div class="chapter-number">第 8 步 / 共 9 步</div>
-        <h2 id="heading-7" tabindex="-1">配置后没有回答，应该先检查哪里？</h2>
+        <h2 id="heading-7" tabindex="-1">第六节　检查连接问题与返回结果</h2>
         <div class="explain-box">
-          <strong
-            >回到第三方应用：按“服务类型 → 地址 → 密钥 → 模型”检查。</strong
-          >
+          <strong>学习目标：能根据错误信息依次检查地址、密钥和模型。</strong>
           <p>
             检测成功后，要确认服务商和模型已启用，再在聊天页选中它。模型列表为空时，可尝试同步列表或按文档添加
             ID；不同应用的操作位置会不同。
@@ -962,7 +1011,7 @@ Content-Type: application/json
           </table>
         </div>
         <div class="explain-box">
-          <strong>这一小步：分清请求和响应。</strong>
+          <strong>知识补充：区分请求与响应。</strong>
           <p>
             请求是<strong>你交给模型的任务</strong>；响应是<strong>服务返回的结果</strong>。练习中的“200
             OK”表示模拟请求成功，下面是返回的数据。
@@ -992,7 +1041,7 @@ Content-Type: application/json
           </li>
         </ol>
         <div class="remember">
-          <b>回答的位置</b>
+          <b>本节小结</b>
           <p><code>choices[0].message.content</code></p>
           <p>
             这里的 <code>role</code> 是
@@ -1032,7 +1081,9 @@ Content-Type: application/json
             </tbody>
           </table>
         </div>
-        <p class="transition">最后一步，把这次练习连到真实的 API 工具上。</p>
+        <p class="transition">
+          继续学习：最后一步，把这次练习连到真实的 API 工具上。
+        </p>
       </section>
       <section
         class="chapter"
@@ -1042,9 +1093,9 @@ Content-Type: application/json
         hidden
       >
         <div class="chapter-number">第 9 步 / 共 9 步</div>
-        <h2 id="heading-8" tabindex="-1">把同一套步骤，用到你选的第三方应用</h2>
+        <h2 id="heading-8" tabindex="-1">本课整理　迁移到真实应用</h2>
         <div class="explain-box">
-          <strong>迁移清单：目标是成功聊一句，不要求自己写请求。</strong>
+          <strong>学习目标：能依据操作清单，在可信应用中完成配置。</strong>
           <p>
             回到真实应用，把下面五步走完。刚才使用的假地址、假模型和随机生成的
             <code>demo-key-…</code> 都仅供教学，不能用于真实服务。
@@ -1077,7 +1128,7 @@ Content-Type: application/json
           </li>
         </ol>
         <div class="remember">
-          <b>你填写配置，应用组装请求</b>
+          <b>本节小结</b>
           <p>
             地址决定发给谁；密钥提供调用身份；模型 ID
             选择模型。应用把你的提问写进正文，发送请求，再把响应显示成聊天消息。
@@ -1139,6 +1190,74 @@ Content-Type: application/json
         纯本地模拟 · 不要输入真实密钥 · 应用与服务商均为教学示例
       </p>
     </main>
+    <dialog
+      id="keyNameDialog"
+      class="console-dialog"
+      aria-labelledby="keyNameTitle"
+      aria-describedby="keyNameHelp"
+    >
+      <form id="keyNameForm" novalidate>
+        <div class="dialog-heading">
+          <h2 id="keyNameTitle">创建 API 密钥</h2>
+          <button
+            class="dialog-close"
+            id="closeKeyName"
+            type="button"
+            aria-label="关闭创建窗口"
+          >
+            ×
+          </button>
+        </div>
+        <p id="keyNameHelp">
+          请为密钥设置一个便于辨认的名称，例如“手机聊天”或“电脑应用”。名称用于管理，认证时使用的是生成的密钥值。
+        </p>
+        <label for="keyName"
+          >密钥名称<input
+            id="keyName"
+            maxlength="40"
+            placeholder="例如：手机聊天"
+            autocomplete="off"
+            autofocus
+            aria-describedby="keyNameError"
+        /></label>
+        <p id="keyNameError" class="dialog-error" role="alert"></p>
+        <p class="field-help">
+          本操作只创建教学凭证，不会连接真实服务或产生费用。
+        </p>
+        <div class="dialog-actions">
+          <button id="cancelKeyName" type="button" class="secondary">
+            取消</button
+          ><button type="submit" class="primary">创建密钥</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog
+      id="revokeDialog"
+      class="console-dialog"
+      aria-labelledby="revokeTitle"
+    >
+      <div class="dialog-heading">
+        <h2 id="revokeTitle">撤销 API 密钥</h2>
+        <button
+          id="closeRevoke"
+          type="button"
+          class="dialog-close"
+          aria-label="关闭撤销窗口"
+        >
+          ×
+        </button>
+      </div>
+      <p id="revokeDescription"></p>
+      <p>
+        撤销后，使用此密钥的请求将无法通过认证；其他密钥不受影响。确认后不可恢复，可另行创建新密钥。
+      </p>
+      <div class="dialog-actions">
+        <button id="cancelRevoke" type="button" class="secondary">取消</button
+        ><button id="confirmRevoke" type="button" class="danger-button">
+          确认撤销
+        </button>
+      </div>
+    </dialog>
     <script src="lesson.js"></script>
     <script src="app.js"></script>
   </body>

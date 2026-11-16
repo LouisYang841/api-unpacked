@@ -1444,3 +1444,182 @@ details p {
   opacity: 0.5;
   cursor: default;
 }
+.console-dialog {
+  width: min(480px, calc(100vw - 32px));
+  max-height: calc(100dvh - 40px);
+  overflow: auto;
+  border: 1px solid #d5e0e8;
+  border-radius: 12px;
+  padding: 24px;
+  color: #34495e;
+  background: #fff;
+  box-shadow: 0 20px 80px #18344930;
+}
+.console-dialog:not([open]) {
+  display: none;
+}
+.console-dialog::backdrop {
+  background: #172b3f77;
+  backdrop-filter: blur(3px);
+}
+.console-dialog.dialog-fallback[open] {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  height: fit-content;
+  z-index: 100;
+  box-shadow: 0 0 0 100vmax #172b3f77;
+}
+.console-dialog form {
+  padding: 0;
+}
+.dialog-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+.dialog-heading h2 {
+  font-size: 21px;
+  margin: 0;
+}
+.dialog-close {
+  background: #f1f5f8;
+  border: 0;
+  color: #698393;
+  border-radius: 5px;
+  font-size: 23px;
+  line-height: 1;
+  width: 29px;
+  height: 29px;
+}
+.console-dialog p {
+  font-size: 13px;
+  color: #708592;
+}
+.console-dialog label {
+  font-size: 13px;
+  margin-top: 20px;
+}
+.console-dialog .dialog-error {
+  color: #af4e39;
+  margin: 5px 0 16px;
+  font-size: 12px;
+}
+.dialog-error:empty {
+  display: none;
+}
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+.danger-button {
+  background: #b55345;
+  border: 0;
+  color: white;
+  font-size: 13px;
+  padding: 10px 15px;
+  border-radius: 6px;
+}
+.key-record time {
+  display: block;
+  width: 100%;
+  font-size: 10px;
+  color: #8398a4;
+}
+.model-fetch {
+  border: 1px solid #d2e2ee;
+  border-radius: 6px;
+  padding: 13px;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+.model-fetch > span {
+  font-size: 11px;
+  color: #718e9f;
+}
+.connection-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.connection-actions button:disabled,
+.chat-composer button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.enable-provider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.enable-provider input {
+  width: auto;
+  margin: 0;
+  accent-color: #2c83b5;
+}
+#connectionStatus {
+  font-size: 12px;
+  color: #4e7b65;
+  position: relative;
+}
+.status-error {
+  color: #aa4a34 !important;
+}
+.chat-composer {
+  padding: 13px;
+  border-top: 1px solid #d8e5ee;
+  background: white;
+}
+.chat-composer label {
+  font-size: 11px;
+  color: #718c9b;
+  margin: 0 0 5px;
+}
+.chat-composer > div {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+}
+.chat-composer input {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 12px;
+}
+.chat-composer .primary {
+  white-space: nowrap;
+  padding: 10px 13px;
+}
+.chat-composer small {
+  font-size: 10px;
+  color: #8a9ca7;
+}
+input[aria-invalid='true'] {
+  border-color: #b65a43;
+}
+@media (max-width: 600px) {
+  .console-dialog {
+    padding: 20px;
+  }
+  .model-fetch {
+    align-items: start;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .key-record code {
+    min-width: 140px;
+  }
+  .connection-actions {
+    gap: 8px;
+  }
+  .connection-actions .primary,
+  .connection-actions .secondary {
+    font-size: 12px;
+  }
+}

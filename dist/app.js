@@ -5,6 +5,10 @@ const validKeys = new Set();
 const keyRecords = [];
 const completedKeys = new Map();
 const scenarioStates = new Map();
+let fetchedConnection = null,
+  savedConnection = null,
+  connectionTested = false,
+  pendingRevocation = null;
 function feedback(id, errors, success) {
   const box = $('feedback-' + id);
   box.replaceChildren();
@@ -44,7 +48,12 @@ function uiBody() {
   };
 }
 function updatePreview(reset = true) {
-  if (reset) stopScenario('ui');
+  if (reset) {
+    stopScenario('ui');
+    invalidateConnection();
+    $('feedback-ui').replaceChildren();
+    $('uiResponse').hidden = false;
+  }
   const endpoint = Lesson.composeEndpoint($('baseUrl').value);
   const key = $('apiKey').value.trim();
   // Never echo arbitrary entered credentials into the page or logs.
@@ -73,7 +82,96 @@ $('toggleKey').addEventListener('click', () => {
   $('toggleKey').setAttribute('aria-pressed', String(show));
   $('toggleKey').textContent = show ? '隐藏教学密钥' : '显示教学密钥';
 });
+function openConsoleDialog(id) {
+  const dialog = $(id);
+  if (typeof dialog.showModal === 'function') dialog.showModal();
+  else {
+    dialog.setAttribute('open', '');
+    dialog.classList.add('dialog-fallback');
+  }
+  dialog.querySelector('input,button')?.focus();
+}
+function closeConsoleDialog(id) {
+  const dialog = $(id);
+  if (typeof dialog.close === 'function') dialog.close();
+  else dialog.removeAttribute('open');
+  dialog.classList.remove('dialog-fallback');
+}
 $('createKey').addEventListener('click', () => {
+  $('keyName').value = '';
+  $('keyName').removeAttribute('aria-invalid');
+  $('keyNameError').textContent = '';
+  openConsoleDialog('keyNameDialog');
+  $('keyName').focus();
+});
+['cancelKeyName', 'closeKeyName'].forEach((id) =>
+  $(id).addEventListener('click', () => {
+    closeConsoleDialog('keyNameDialog');
+    $('createKey').focus();
+  }),
+);
+['cancelRevoke', 'closeRevoke'].forEach((id) =>
+  $(id).addEventListener('click', () => {
+    pendingRevocation = null;
+    closeConsoleDialog('revokeDialog');
+    $('revokeKey').focus();
+  }),
+);
+['keyNameDialog', 'revokeDialog'].forEach((id) => {
+  $(id).addEventListener('cancel', (e) => {
+    e.preventDefault();
+    closeConsoleDialog(id);
+    pendingRevocation = null;
+    $('createKey').focus();
+  });
+  $(id).addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeConsoleDialog(id);
+      pendingRevocation = null;
+      $('createKey').focus();
+    }
+    if (e.key === 'Tab' && $(id).classList.contains('dialog-fallback')) {
+      const nodes = [...$(id).querySelectorAll('input,button')].filter(
+        (n) => !n.disabled,
+      );
+      const first = nodes[0],
+        last = nodes.at(-1);
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  });
+});
+function requestRevocation(key) {
+  if (!validKeys.has(key)) return;
+  pendingRevocation = key;
+  const record = keyRecords.find((r) => r.key === key);
+  $('revokeDescription').textContent =
+    '即将撤销“' + record.label + '”（末尾 ' + key.slice(-4) + '）。';
+  openConsoleDialog('revokeDialog');
+}
+$('confirmRevoke').addEventListener('click', () => {
+  const key = pendingRevocation;
+  pendingRevocation = null;
+  closeConsoleDialog('revokeDialog');
+  revokeTeachingKey(key);
+  $('createKey').focus();
+});
+$('keyNameForm').addEventListener('submit', (event) => {
+  event.preventDefault();
+  const label = $('keyName').value.trim();
+  if (!label || label.length > 40) {
+    $('keyNameError').textContent = '请输入 1—40 个字符的密钥名称。';
+    $('keyName').setAttribute('aria-invalid', 'true');
+    $('keyName').focus();
+    return;
+  }
+  $('keyNameError').textContent = '';
   try {
     do {
       activeKey = Lesson.generateTeachingKey();
@@ -81,25 +179,29 @@ $('createKey').addEventListener('click', () => {
     validKeys.add(activeKey);
     keyRecords.push({
       key: activeKey,
-      label: '教学密钥 ' + (keyRecords.length + 1),
+      label,
+      createdAt: new Date().toISOString(),
       revoked: false,
     });
   } catch {
     $('keyIssueStatus').textContent =
       '无法生成教学密钥，请使用支持 Web Crypto 的浏览器访问此 HTTPS 页面。';
+    $('keyNameError').textContent = $('keyIssueStatus').textContent;
     return;
   }
+  closeConsoleDialog('keyNameDialog');
   $('issuedKey').value = activeKey;
   syncTeachingKey();
   $('keyReceipt').hidden = false;
   $('createKey').disabled = false;
-  $('createKey').textContent = '再创建一把教学密钥';
+  $('createKey').textContent = '＋ 创建 API 密钥';
   $('keyIssueStatus').textContent =
     '已新增一把随机教学密钥。之前未撤销的密钥仍然有效；下面可切换查看、复制或单独撤销。刷新页面后全部失效。';
   $('keyReceipt').classList.remove('key-arrival');
   void $('keyReceipt').offsetWidth;
   $('keyReceipt').classList.add('key-arrival');
   celebrate($('keyReceipt'));
+  $('issuedKey').focus();
 });
 $('copyKey').addEventListener('click', async () => {
   if (!activeKey) {
@@ -116,7 +218,7 @@ $('copyKey').addEventListener('click', async () => {
     $('keyIssueStatus').textContent = '可以手动复制上方刚生成的教学密钥。';
   }
 });
-$('revokeKey').addEventListener('click', () => revokeTeachingKey(activeKey));
+$('revokeKey').addEventListener('click', () => requestRevocation(activeKey));
 function requestKeyFor(id) {
   return id === 'ui'
     ? $('apiKey').value.trim()
@@ -129,6 +231,7 @@ function renderKeyList() {
   list.replaceChildren();
   keyRecords.forEach((record) => {
     const li = document.createElement('li');
+    li.dataset.key = record.key;
     li.className =
       'key-record' +
       (record.revoked ? ' revoked' : '') +
@@ -142,8 +245,14 @@ function renderKeyList() {
           ? ' · 当前查看'
           : ' · 有效');
     const code = document.createElement('code');
-    code.textContent = record.key;
-    li.append(title, code);
+    code.textContent =
+      record.key.slice(0, 9) + '••••••••' + record.key.slice(-4);
+    const created = document.createElement('time');
+    created.dateTime = record.createdAt;
+    created.textContent =
+      '创建于 ' +
+      new Date(record.createdAt).toLocaleString('zh-CN', { hour12: false });
+    li.append(title, code, created);
     if (!record.revoked) {
       const select = document.createElement('button');
       select.className = 'text-button';
@@ -159,7 +268,7 @@ function renderKeyList() {
       revoke.type = 'button';
       revoke.className = 'text-button';
       revoke.textContent = '撤销这一把';
-      revoke.addEventListener('click', () => revokeTeachingKey(record.key));
+      revoke.addEventListener('click', () => requestRevocation(record.key));
       li.append(select, revoke);
     }
     list.append(li);
@@ -182,6 +291,11 @@ function revokeTeachingKey(key) {
     }
   });
   syncTeachingKey();
+  if (savedConnection?.key === key) {
+    connectionTested = false;
+    $('sendChat').disabled = true;
+    setConnectionNotice('已保存配置的密钥被撤销，请更换密钥并重新保存。', true);
+  }
   updateProgress();
   $('keyIssueStatus').textContent =
     '已撤销所选密钥，其他 ' +
@@ -245,27 +359,135 @@ function showResponse(id, answer) {
   raw.append(summary, pre, note);
   el.append(title, raw);
 }
+function makeOption(label, value) {
+  const node = document.createElement('option');
+  node.textContent = label;
+  node.value = value;
+  return node;
+}
+function connectionValues() {
+  return {
+    baseUrl: $('baseUrl').value.trim(),
+    key: $('apiKey').value.trim(),
+    model: $('connectionModel').value,
+  };
+}
+function sameConnection(a, b) {
+  return (
+    a && b && a.baseUrl === b.baseUrl && a.key === b.key && a.model === b.model
+  );
+}
+function setConnectionNotice(message, bad = false) {
+  $('connectionStatus').textContent = message;
+  $('connectionStatus').classList.toggle('status-error', bad);
+}
+function invalidateConnection() {
+  connectionTested = false;
+  $('sendChat').disabled = true;
+  $('testConnection').disabled = true;
+  const values = connectionValues();
+  if (
+    fetchedConnection &&
+    (values.baseUrl !== fetchedConnection.baseUrl ||
+      values.key !== fetchedConnection.key)
+  ) {
+    fetchedConnection = null;
+    $('connectionModel').replaceChildren(makeOption('请先获取模型列表', ''));
+    $('connectionModel').disabled = true;
+    $('modelStatus').textContent = '连接地址或密钥已变更，请重新获取模型列表。';
+  }
+  setConnectionNotice(
+    savedConnection
+      ? '配置已修改，请重新保存并检测连接。'
+      : '请先填写地址与密钥，再获取模型列表。',
+  );
+}
+$('fetchModels').addEventListener('click', () => {
+  const values = connectionValues(),
+    errors = Lesson.validateConnection(
+      { ...values, model: 'demo-small' },
+      validKeys,
+    );
+  if (errors.length) {
+    $('modelStatus').textContent = errors[0];
+    setConnectionNotice('未能获取模型，请检查地址与密钥。', true);
+    return;
+  }
+  fetchedConnection = { ...values };
+  $('connectionModel').replaceChildren(
+    makeOption('请选择模型', ''),
+    makeOption('demo-small', 'demo-small'),
+  );
+  $('connectionModel').disabled = false;
+  $('modelStatus').textContent =
+    '已获取 1 个可用模型（模拟）。请选择 demo-small。';
+  setConnectionNotice('模型列表已更新。选择模型后，点击“保存配置”。');
+});
 $('requestForm').addEventListener('submit', (e) => {
   e.preventDefault();
-  const errors = Lesson.validateConnection(
-    {
-      baseUrl: $('baseUrl').value,
-      key: $('apiKey').value,
-      model: $('connectionModel').value,
-    },
-    validKeys,
+  const values = connectionValues(),
+    errors = Lesson.validateConnection(values, validKeys);
+  if (!fetchedConnection)
+    errors.push('请先点击“获取模型列表”，再选择服务商提供的模型。');
+  if (errors.length) {
+    setConnectionNotice(errors.join(' '), true);
+    scenarioError('ui', errors);
+    return;
+  }
+  savedConnection = { ...values };
+  connectionTested = false;
+  $('sendChat').disabled = true;
+  $('testConnection').disabled = false;
+  setConnectionNotice('配置已保存（仅本次页面有效）。下一步：点击“检测连接”。');
+});
+$('providerEnabled').addEventListener('change', () => {
+  connectionTested = false;
+  $('sendChat').disabled = true;
+  $('testConnection').disabled = !savedConnection;
+  stopScenario('ui');
+  setConnectionNotice(
+    $('providerEnabled').checked
+      ? '服务商已启用，请检测连接。'
+      : '服务商已停用，启用后才能检测或发送消息。',
   );
+});
+$('testConnection').addEventListener('click', () => {
+  const errors = savedConnection
+    ? Lesson.validateConnection(savedConnection, validKeys)
+    : ['请先保存配置。'];
+  if (!sameConnection(savedConnection, connectionValues()))
+    errors.push('配置已变更，请重新保存。');
+  if (!$('providerEnabled').checked) errors.push('请先启用此服务商。');
+  if (errors.length) {
+    connectionTested = false;
+    $('sendChat').disabled = true;
+    setConnectionNotice(errors.join(' '), true);
+    scenarioError('ui', errors);
+    return;
+  }
+  connectionTested = true;
+  $('sendChat').disabled = false;
+  setConnectionNotice('连接检测通过（模拟）。请到下方聊天窗口点击“发送”。');
+  $('scenario-status-ui').textContent =
+    '服务商已连接 · demo-small 已选中 · 等待发送消息';
+  celebrate($('connectionStatus'));
+});
+$('chatForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const errors = savedConnection
+    ? Lesson.validateConnection(savedConnection, validKeys)
+    : ['请先保存服务配置。'];
+  if (!connectionTested || !sameConnection(savedConnection, connectionValues()))
+    errors.push('请先保存当前配置并完成连接检测。');
+  if (!$('providerEnabled').checked)
+    errors.push('服务商已停用，请先启用并重新检测。');
   feedback(
     'ui',
     errors,
-    '模拟连接成功！地址正确，密钥通过教学验证，模型匹配。应用已替你把设置组成请求，下面是第一次对话的模拟回答。',
+    '检查结果：用户消息已提交，密钥验证通过。请观察聊天窗口中逐段显示的模型回答。',
   );
   if (!errors.length) showResponse('uiResponse', answers.rainbow);
-  else {
-    $('uiResponse').textContent =
-      '模拟连接未通过。按下面的提示核对服务地址、密钥和模型。';
-    scenarioError('ui', errors);
-  }
+  else scenarioError('ui', errors);
 });
 const cards = [
   { id: 'assistant', text: '"assistant"' },
@@ -278,6 +500,9 @@ let slots = { key: null, auth: null, content: null },
   selected = null;
 function syncTeachingKey() {
   $('issuedKey').value = activeKey || '';
+  $('issuedKeyLabel').textContent = activeKey
+    ? '已创建 · ' + keyRecords.find((r) => r.key === activeKey).label
+    : '尚未创建密钥';
   $('keyReceipt').hidden = !activeKey;
   const card = cards.find((c) => c.id === 'auth');
   if (!slots.auth || !validKeys.has(card.text)) {
@@ -480,6 +705,13 @@ document.querySelectorAll('[data-reset]').forEach((b) =>
     updateProgress();
     $('feedback-' + id).replaceChildren();
     if (id === 'ui') {
+      fetchedConnection = null;
+      savedConnection = null;
+      connectionTested = false;
+      $('providerEnabled').checked = true;
+      $('connectionModel').replaceChildren(makeOption('请先获取模型列表', ''));
+      $('connectionModel').disabled = true;
+      $('modelStatus').textContent = '填写地址和密钥后，获取服务商提供的模型。';
       ['baseUrl', 'apiKey', 'connectionModel'].forEach(
         (id) => ($(id).value = ''),
       );
@@ -565,6 +797,10 @@ function goToChapter(index, moveFocus = true) {
   document.querySelector('.contents').open = false;
   updateChapterMarks();
   history.replaceState(null, '', '#step-' + index);
+  if (index === 0 && !reducedMotion()) {
+    stopDemo();
+    startDemo();
+  }
   if (moveFocus) {
     $('heading-' + index).focus({ preventScroll: true });
     document.querySelector('.reading-progress').scrollIntoView({
