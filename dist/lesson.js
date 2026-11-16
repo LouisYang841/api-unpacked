@@ -37,25 +37,26 @@
       );
     return errors;
   }
-  const endpointRules = {
-    base: {
-      suffix: '/chat/completions',
-      expected: 'https://api.example.com/v1',
-    },
-    host: {
-      suffix: '/v1/chat/completions',
-      expected: 'https://api.example.com',
-    },
-    endpoint: {
-      suffix: '',
-      expected: 'https://api.example.com/v1/chat/completions',
-    },
-  };
-  function composeEndpoint(value, rule = 'base') {
+  function normalizeBaseUrl(value) {
     const clean = String(value ?? '')
       .trim()
       .replace(/\/+$/, '');
-    return clean ? clean + (endpointRules[rule]?.suffix ?? '') : '';
+    if (
+      [
+        'https://api.example.com',
+        'https://api.example.com/v1',
+        'https://api.example.com/v1/chat/completions',
+        'https://api.example.com/v1/responses',
+      ].includes(clean)
+    )
+      return 'https://api.example.com/v1';
+    return clean;
+  }
+  function composeEndpoint(value, useResponses = false) {
+    const base = normalizeBaseUrl(value);
+    return base
+      ? base + (useResponses ? '/responses' : '/chat/completions')
+      : '';
   }
   function generateTeachingKey(cryptoSource = root.crypto) {
     const bytes = new Uint8Array(8);
@@ -80,23 +81,14 @@
   }
   function validateConnection(data, validKeys) {
     const errors = validateKey(data.key, validKeys);
-    const base = String(data.baseUrl ?? '')
-      .trim()
-      .replace(/\/+$/, '');
-    if (base !== endpointRules.base.expected) {
-      if (base.includes('/chat/completions'))
-        errors.push(
-          '此应用会自动补 /chat/completions。请填写基础地址 https://api.example.com/v1，否则路径会重复。',
-        );
-      else if (base === 'https://api.example.com')
-        errors.push(
-          '此应用只补 /chat/completions，基础地址还需要保留 /v1：填写 https://api.example.com/v1。',
-        );
-      else
-        errors.push(
-          '请使用示例服务的 API 基础地址 https://api.example.com/v1，而不是官网或控制台网址。',
-        );
-    }
+    if (normalizeBaseUrl(data.baseUrl) !== 'https://api.example.com/v1')
+      errors.push(
+        '请填写示例服务的 API 地址，而不是官网或控制台网址。本模拟应用会自动整理该服务的域名、基础地址或完整接口地址。',
+      );
+    if (data.protocol !== 'openai')
+      errors.push(
+        '本示例服务声明支持 OpenAI 兼容格式，请选择它。接口类型由服务商文档决定，不能根据模型名字猜测。',
+      );
     if (data.model !== 'demo-small')
       errors.push(
         '本服务提供的模型 ID 是 demo-small，请选择它；其他服务的模型名不能直接拿来调用。',
@@ -124,7 +116,7 @@
     generateTeachingKey,
     validateConnection,
     composeEndpoint,
-    endpointRules,
+    normalizeBaseUrl,
     parseAndValidate,
   };
   if (typeof module !== 'undefined') module.exports = api;

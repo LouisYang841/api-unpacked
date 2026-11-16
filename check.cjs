@@ -3,16 +3,20 @@ const teachingKey=L.generateTeachingKey();
 assert(/^demo-key-[0-9a-f]{16}$/.test(teachingKey));
 const replacementKey=L.generateTeachingKey();assert.notEqual(teachingKey,replacementKey);
 const validKeys=new Set([teachingKey]);
-const connection={baseUrl:'https://api.example.com/v1',key:teachingKey,model:'demo-small'};
+const connection={baseUrl:'https://api.example.com/v1',key:teachingKey,model:'demo-small',protocol:'openai',useResponses:false};
 assert.deepEqual(L.validateConnection(connection,validKeys),[]);
 assert(L.validateConnection(connection,null).length,'An unissued or revoked teaching key cannot authenticate');
 assert(L.validateConnection({...connection,key:''},validKeys).length);
 assert(L.validateConnection({...connection,key:'Bearer '+teachingKey},validKeys).some(x=>x.includes('Bearer')));
-assert(L.validateConnection({...connection,baseUrl:'https://api.example.com/v1/chat/completions'},validKeys).some(x=>x.includes('重复')));
-assert(L.validateConnection({...connection,baseUrl:'https://api.example.com'},validKeys).some(x=>x.includes('/v1')));
+assert.deepEqual(L.validateConnection({...connection,baseUrl:'https://api.example.com/v1/chat/completions'},validKeys),[]);
+assert.deepEqual(L.validateConnection({...connection,baseUrl:'https://api.example.com'},validKeys),[]);
+assert(L.validateConnection({...connection,protocol:'anthropic'},validKeys).some(e=>e.includes('OpenAI')));
+assert(L.validateConnection({...connection,protocol:'gemini'},validKeys).length);
+assert.deepEqual(L.validateConnection({...connection,useResponses:true},validKeys),[]);
+assert(L.validateConnection({...connection,baseUrl:'https://wrong.example.com'},validKeys).length);
 assert(L.validateConnection({...connection,model:'another-model'},validKeys).length);
 assert.deepEqual(L.validateConnection({...connection,baseUrl:' https://api.example.com/v1/ '},validKeys),[]);
-for(const [rule,entry] of Object.entries(L.endpointRules))assert.equal(L.composeEndpoint(entry.expected,rule),'https://api.example.com/v1/chat/completions');
+for(const address of ['https://api.example.com','https://api.example.com/v1','https://api.example.com/v1/chat/completions','https://api.example.com/v1/responses']){assert.equal(L.composeEndpoint(address),'https://api.example.com/v1/chat/completions');assert.equal(L.composeEndpoint(address,true),'https://api.example.com/v1/responses');}
 assert.equal(L.composeEndpoint(''), '');
 assert.deepEqual(L.validateKey(teachingKey,validKeys),[]);
 assert(L.validateKey(teachingKey,null).length);
@@ -29,7 +33,7 @@ const html=fs.readFileSync('dist/index.html','utf8');const ids=[...html.matchAll
 const app=fs.readFileSync('dist/app.js','utf8');for(const m of app.matchAll(/\$\('([^']+)'\)/g)){assert(ids.includes(m[1]),'Missing element '+m[1]);}
 for(const file of ['style.css','lesson.js','app.js'])assert(fs.existsSync('dist/'+file));
 const chapters=[...html.matchAll(/data-step="(\d+)"/g)].map(m=>Number(m[1]));
-assert.deepEqual(chapters,[0,1,2,3,4,5,6,7,8],'Nine chapters should follow the teaching sequence');
+assert.deepEqual(chapters,[0,1,2,3,4,5,6,7],'Eight chapters should follow the teaching sequence');
 for(const chapter of chapters)assert(ids.includes('heading-'+chapter));
 for(const match of html.matchAll(/data-go="(\d+)"/g))assert(chapters.includes(Number(match[1])),'Navigation target must exist');
 assert(html.includes('data-issued-key'),'Examples show the currently generated teaching key');
@@ -40,8 +44,8 @@ assert(ids.includes('prevStep')&&ids.includes('nextStep'),'Provide explicit sequ
 for(const id of ['createKey','revokeKey','issuedKey','keyNameDialog','keyNameForm','keyName','revokeDialog','confirmRevoke','baseUrl','apiKey','fetchModels','connectionModel','saveConnection','testConnection','chatForm','sendChat','writeKey','scenario-ui','scenario-drag','scenario-write','playDemo','stepDemo'])assert(ids.includes(id),'Missing learning interaction '+id);
 assert(html.includes('data-slot="auth"'),'The drag request includes an authentication header');
 assert(ids.includes('pageRequirement')&&ids.includes('replayDemo'),'Lesson gate status and replay control exist');
-for(const rule of ['base','host','endpoint']){assert(html.includes('data-address-rule="'+rule+'"'),'All three address questions are visible');assert(ids.includes('address-feedback-'+rule)&&ids.includes('address-result-'+rule),'Each address question has independent feedback');}
-assert(!ids.includes('addressRule'),'Address questions must not be hidden behind a dropdown');
+assert(!html.includes('data-address-rule'),'Standalone endpoint questions are removed');
+assert(ids.includes('protocolType')&&ids.includes('useResponses'),'Protocol and Responses controls exist');
 assert(!/\b(?:fetch|XMLHttpRequest|WebSocket)\s*\(/.test(app),'All model calls remain simulated');
 console.log('通过：服务地址拼接、密钥签发与认证、连接配置、JSON 语法与语义、分步结构、模拟聊天与静态资源检查。');
 

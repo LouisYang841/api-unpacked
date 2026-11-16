@@ -21,7 +21,7 @@
         </p>
       </header>
       <div class="reading-progress">
-        <span id="chapterProgress">当前：第 1 步 / 共 9 步</span
+        <span id="chapterProgress">当前：第 1 步 / 共 8 步</span
         ><span>练习完成 <strong id="progressText">0 / 3</strong></span>
       </div>
       <div class="reading-track"><div id="readingBar"></div></div>
@@ -41,37 +41,32 @@
           </li>
           <li>
             <button data-go="2">
-              地址究竟填到哪里<span id="chapter-mark-2"></span>
+              练习一：连接第三方应用<span id="chapter-mark-2"></span>
             </button>
           </li>
           <li>
             <button data-go="3">
-              练习一：连接第三方应用<span id="chapter-mark-3"></span>
+              应用怎样组成请求<span id="chapter-mark-3"></span>
             </button>
           </li>
           <li>
             <button data-go="4">
-              应用怎样组成请求<span id="chapter-mark-4"></span>
+              巩固练习：拖拽请求<span id="chapter-mark-4"></span>
             </button>
           </li>
           <li>
             <button data-go="5">
-              拓展练习：拖拽请求<span id="chapter-mark-5"></span>
+              巩固练习：补全 JSON<span id="chapter-mark-5"></span>
             </button>
           </li>
           <li>
             <button data-go="6">
-              拓展练习：补全 JSON<span id="chapter-mark-6"></span>
+              连不上时怎样排查<span id="chapter-mark-6"></span>
             </button>
           </li>
           <li>
             <button data-go="7">
-              连不上时怎样排查<span id="chapter-mark-7"></span>
-            </button>
-          </li>
-          <li>
-            <button data-go="8">
-              迁移到真实应用<span id="chapter-mark-8"></span>
+              迁移到真实应用<span id="chapter-mark-7"></span>
             </button>
           </li>
         </ol>
@@ -95,7 +90,7 @@
         data-step="0"
         aria-labelledby="heading-0"
       >
-        <div class="chapter-number">第 1 步 / 共 9 步</div>
+        <div class="chapter-number">第 1 步 / 共 8 步</div>
         <h2 id="heading-0" tabindex="-1">第一节　认识聊天应用、服务商与 API</h2>
         <div class="explain-box">
           <strong
@@ -236,7 +231,7 @@
         aria-labelledby="heading-1"
         hidden
       >
-        <div class="chapter-number">第 2 步 / 共 9 步</div>
+        <div class="chapter-number">第 2 步 / 共 8 步</div>
         <h2 id="heading-1" tabindex="-1">第二节　创建并管理 API 密钥</h2>
         <div class="explain-box">
           <strong>学习目标：学会命名、创建、复制和撤销 API 密钥。</strong>
@@ -263,6 +258,11 @@
               >
             </p>
             <p>可用模型 ID：<code>demo-small</code></p>
+            <p>
+              本示例服务支持：<strong>OpenAI 兼容</strong><br />Chat
+              Completions：支持；Responses API：支持。<br />Anthropic / Gemini
+              原生兼容接口：本例未提供。
+            </p>
           </div>
           <button class="primary" id="createKey" type="button">
             ＋ 创建 API 密钥
@@ -321,9 +321,10 @@
           </p>
         </div>
         <p class="transition">
-          继续学习：密钥领到了。下一步，看看 API 地址应该复制哪一段。
+          继续学习：将服务商地址和刚创建的密钥填入第三方应用，完成第一次对话。
         </p>
       </section>
+
       <section
         class="chapter"
         id="step-2"
@@ -331,232 +332,55 @@
         aria-labelledby="heading-2"
         hidden
       >
-        <div class="chapter-number">第 3 步 / 共 9 步</div>
-        <h2 id="heading-2" tabindex="-1">第三节　确定 API 地址的填写方式</h2>
+        <div class="chapter-number">第 3 步 / 共 8 步</div>
+        <h2 id="heading-2" tabindex="-1">第三节　在第三方应用中完成连接</h2>
         <div class="explain-box">
-          <strong>学习目标：能根据应用追加的路径，选择正确的 Base URL。</strong>
+          <strong>学习目标：完成连接设置，并发送第一条消息。</strong>
           <p>
-            服务商给的<strong>完整 Endpoint</strong
-            >是最终请求的目标；应用设置里的
-            <strong>Base URL</strong>
-            通常只是基础地址，应用还会自动补上一段路径。登录页、官网首页和控制台网址不能代替
-            API 地址。
+            先查服务商说明，确认它使用 OpenAI、Anthropic 还是 Gemini
+            兼容格式；若使用 OpenAI 兼容格式，再确认它支持 Chat
+            Completions、Responses，还是两者都支持。之后填写地址、密钥并选择模型。
+          </p>
+          <p>
+            请按顺序操作：获取模型列表 → 选择模型 → 保存配置 → 检测连接 →
+            在聊天窗口点击“发送”。各按钮完成不同任务，请观察每一步的状态变化。
           </p>
         </div>
-        <h3>① 先对照服务商的信息</h3>
-        <pre class="light-code">
-API 基础地址：https://api.example.com/v1
-完整聊天接口：https://api.example.com/v1/chat/completions</pre>
-        <h3>② 再看应用会补什么</h3>
+        <h3>观察示例：先确认接口类型</h3>
         <div class="table-scroll">
           <table>
             <thead>
               <tr>
-                <th>应用说明</th>
-                <th>此例应该填</th>
+                <th>服务商说明</th>
+                <th>应用中选择</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>自动补 <code>/chat/completions</code></td>
-                <td><code>https://api.example.com/v1</code></td>
+                <td>OpenAI 兼容</td>
+                <td>OpenAI 兼容；按文档选择 Chat Completions 或 Responses</td>
               </tr>
               <tr>
-                <td>自动补 <code>/v1/chat/completions</code></td>
-                <td><code>https://api.example.com</code></td>
+                <td>Anthropic 兼容</td>
+                <td>Anthropic 兼容格式</td>
               </tr>
               <tr>
-                <td>要求完整 Endpoint，不再补路径</td>
-                <td>
-                  <code>https://api.example.com/v1/chat/completions</code>
-                </td>
+                <td>Gemini 兼容</td>
+                <td>Gemini 兼容格式</td>
               </tr>
             </tbody>
           </table>
         </div>
         <p>
-          <strong>不是所有应用都一样。</strong
-          >内置服务商常常已填好地址；自定义服务需要核对接口类型、应用版本和字段说明。不要凭经验一律添加或删除
-          <code>/v1</code>。
+          <strong>接口类型不等于模型品牌。</strong>某个网关提供 Claude 或 Gemini
+          模型时，也可能要求 OpenAI
+          兼容格式。选择依据是服务商公布的接口，而不是模型名字。
         </p>
-        <h3>③ 动手操作：分别完成下面三道题</h3>
-        <div class="address-lab">
-          <p class="field-help">
-            共 3
-            题，全部显示在下方。请分别选出正确的填写地址，三题全部答对后即可进入下一页。
-          </p>
-          <fieldset class="address-question" data-address-rule="base">
-            <legend>第 1 题／共 3 题 · 应用 A</legend>
-            <p>
-              应用 A的地址规则：<strong>自动补上 /chat/completions</strong
-              >。应填写下面哪个地址？
-            </p>
-            <div class="quiz-options">
-              <button
-                type="button"
-                class="address-choice"
-                data-address-choice="https://api.example.com"
-                data-rule="base"
-              >
-                https://api.example.com</button
-              ><button
-                type="button"
-                class="address-choice"
-                data-address-choice="https://api.example.com/v1"
-                data-rule="base"
-              >
-                https://api.example.com/v1</button
-              ><button
-                type="button"
-                class="address-choice"
-                data-address-choice="https://api.example.com/v1/chat/completions"
-                data-rule="base"
-              >
-                https://api.example.com/v1/chat/completions
-              </button>
-            </div>
-            <p
-              class="address-feedback"
-              id="address-feedback-base"
-              role="status"
-            >
-              请选择一个地址，观察拼接结果。
-            </p>
-            <p class="small-label">应用最终请求的完整地址：</p>
-            <code id="address-result-base" class="address-result"
-              >等待选择</code
-            >
-          </fieldset>
-          <fieldset class="address-question" data-address-rule="host">
-            <legend>第 2 题／共 3 题 · 应用 B</legend>
-            <p>
-              应用 B的地址规则：<strong>自动补上 /v1/chat/completions</strong
-              >。应填写下面哪个地址？
-            </p>
-            <div class="quiz-options">
-              <button
-                type="button"
-                class="address-choice"
-                data-address-choice="https://api.example.com"
-                data-rule="host"
-              >
-                https://api.example.com</button
-              ><button
-                type="button"
-                class="address-choice"
-                data-address-choice="https://api.example.com/v1"
-                data-rule="host"
-              >
-                https://api.example.com/v1</button
-              ><button
-                type="button"
-                class="address-choice"
-                data-address-choice="https://api.example.com/v1/chat/completions"
-                data-rule="host"
-              >
-                https://api.example.com/v1/chat/completions
-              </button>
-            </div>
-            <p
-              class="address-feedback"
-              id="address-feedback-host"
-              role="status"
-            >
-              请选择一个地址，观察拼接结果。
-            </p>
-            <p class="small-label">应用最终请求的完整地址：</p>
-            <code id="address-result-host" class="address-result"
-              >等待选择</code
-            >
-          </fieldset>
-          <fieldset class="address-question" data-address-rule="endpoint">
-            <legend>第 3 题／共 3 题 · 应用 C</legend>
-            <p>
-              应用 C的地址规则：<strong>不补路径，直接使用完整 Endpoint</strong
-              >。应填写下面哪个地址？
-            </p>
-            <div class="quiz-options">
-              <button
-                type="button"
-                class="address-choice"
-                data-address-choice="https://api.example.com"
-                data-rule="endpoint"
-              >
-                https://api.example.com</button
-              ><button
-                type="button"
-                class="address-choice"
-                data-address-choice="https://api.example.com/v1"
-                data-rule="endpoint"
-              >
-                https://api.example.com/v1</button
-              ><button
-                type="button"
-                class="address-choice"
-                data-address-choice="https://api.example.com/v1/chat/completions"
-                data-rule="endpoint"
-              >
-                https://api.example.com/v1/chat/completions
-              </button>
-            </div>
-            <p
-              class="address-feedback"
-              id="address-feedback-endpoint"
-              role="status"
-            >
-              请选择一个地址，观察拼接结果。
-            </p>
-            <p class="small-label">应用最终请求的完整地址：</p>
-            <code id="address-result-endpoint" class="address-result"
-              >等待选择</code
-            >
-          </fieldset>
-          <p id="addressProgress" class="address-progress" role="status">
-            本节练习：已完成 0 / 3 题。请依次回答上方三道题。
-          </p>
-        </div>
         <div class="remember">
-          <b>本节小结</b>
+          <b>本节要点</b>
           <p>
-            <code>https://api.example.com/v1</code> +
-            <code>/chat/completions</code><br />＝
-            <code>https://api.example.com/v1/chat/completions</code>
-          </p>
-        </div>
-        <p class="fineprint">
-          具体应用的字段名称和拼接规则请查官方文档。例：<a
-            href="https://www.cherryai.com.cn/docs/zh-cn/pre-basic/settings/providers/"
-            target="_blank"
-            rel="noreferrer"
-            >Cherry Studio 桌面版地址说明</a
-          >、<a
-            href="https://cherryai.com.cn/docs/zh-cn/mobile/providers-and-models/"
-            target="_blank"
-            rel="noreferrer"
-            >移动版 Base URL 说明</a
-          >。本课的 A / B / C 均为教学模型，不是某款软件的截图。
-        </p>
-        <p class="transition">
-          继续学习：把领到的密钥和正确的基础地址，一起填到模拟聊天应用。
-        </p>
-      </section>
-      <section
-        class="chapter"
-        id="step-3"
-        data-step="3"
-        aria-labelledby="heading-3"
-        hidden
-      >
-        <div class="chapter-number">第 4 步 / 共 9 步</div>
-        <h2 id="heading-3" tabindex="-1">第四节　在第三方应用中完成连接</h2>
-        <div class="explain-box">
-          <strong>学习目标：完成连接设置，并发送第一条消息。</strong>
-          <p>
-            先选择服务商及接口类型，再填写地址和密钥。本例已选好接口类型，需填写的内容仍是地址、密钥和模型三项。
-          </p>
-          <p>
-            请按顺序操作：获取模型列表 → 选择模型 → 保存配置 → 检测连接 →
-            在聊天窗口点击“发送”。各按钮完成不同任务，请观察每一步的状态变化。
+            OpenAI 兼容并不自动表示支持
+            Responses。只有服务商与所用应用都支持相应接口时，才能启用它。路径和数据格式由应用处理，不必先学习手动拼接网址。
           </p>
         </div>
         <div class="provider-facts">
@@ -567,10 +391,18 @@ API 基础地址：https://api.example.com/v1
               >demo-small</code
             >
           </p>
+          <p>
+            本示例服务支持：<strong>OpenAI 兼容</strong><br />Chat
+            Completions：支持；Responses API：支持。<br />Anthropic / Gemini
+            原生兼容接口：本例未提供。
+          </p>
         </div>
         <h3>动手操作：完成一次连接</h3>
         <ol class="instructions">
-          <li>填写服务商的基础地址，粘贴任意一把有效教学密钥。</li>
+          <li>
+            确认接口兼容类型；本例选择 OpenAI 兼容。可按服务商说明启用
+            Responses，再填写地址并粘贴有效教学密钥。
+          </li>
           <li>点击“获取模型列表”，再选择 demo-small。</li>
           <li>点击“保存配置”。保存成功后，再点击“检测连接”。</li>
           <li>观察连接成功提示，然后到下方聊天窗口点击“发送”。</li>
@@ -580,14 +412,28 @@ API 基础地址：https://api.example.com/v1
             <span class="task-icon">⚙</span>
             <div>
               <strong>示例聊天应用 · 模型服务设置</strong>
-              <p>应用 A：在基础地址后自动补 /chat/completions。</p>
+              <p>
+                本模拟应用会自动整理示例服务的域名、基础地址或完整聊天接口地址。
+              </p>
             </div>
           </div>
           <form id="requestForm" autocomplete="off">
             <label
-              >服务名称 / 接口类型<span class="fixed-tag">已选好</span
-              ><input value="示例服务 · 聊天消息兼容接口" readonly
-            /></label>
+              >接口兼容类型<span class="fixed-tag">按服务商说明选择</span
+              ><select id="protocolType">
+                <option value="openai" selected>OpenAI 兼容</option>
+                <option value="anthropic">Anthropic 兼容</option>
+                <option value="gemini">Gemini 兼容</option>
+              </select></label
+            ><label class="enable-provider"
+              ><input id="useResponses" type="checkbox" /> 使用 Responses
+              API</label
+            >
+            <p id="protocolHelp" class="field-help">
+              本示例服务同时支持 Chat Completions 和 Responses。未勾选时使用
+              Chat Completions；勾选后，应用自动改用 Responses
+              的地址和数据格式。
+            </p>
             <p class="field-help">
               真实应用中可能看到“OpenAI
               兼容”“Anthropic”“Gemini”等接口选项，应按服务商文档选择，不能只看模型名称。
@@ -598,13 +444,18 @@ API 基础地址：https://api.example.com/v1
                 id="baseUrl"
                 type="text"
                 inputmode="url"
-                placeholder="填写基础地址，注意 /v1"
+                placeholder="粘贴服务商提供的 API 地址"
                 spellcheck="false"
                 autocapitalize="off"
                 autocomplete="off"
             /></label>
             <p class="field-help">
-              本应用会自动补 /chat/completions，不要把完整接口路径重复填进来。
+              本例可填写 https://api.example.com、https://api.example.com/v1
+              或完整聊天接口；三种写法会连接同一示例服务。
+            </p>
+            <p class="field-help">
+              优先选择应用内置的服务商，地址通常已有默认值；添加自定义服务时，复制服务商文档提供的
+              API 地址。各应用的自动处理规则可能不同，连接失败时再核对说明。
             </p>
             <label
               >② API Key<span class="fill-tag">你来填</span
@@ -716,7 +567,7 @@ API 基础地址：https://api.example.com/v1
           </p>
         </div>
         <p>
-          <button class="secondary" data-go="8">
+          <button class="secondary" data-go="7">
             完成各节练习后，查看迁移清单 →
           </button>
         </p>
@@ -726,24 +577,29 @@ API 基础地址：https://api.example.com/v1
       </section>
       <section
         class="chapter"
-        id="step-4"
-        data-step="4"
-        aria-labelledby="heading-4"
+        id="step-3"
+        data-step="3"
+        aria-labelledby="heading-3"
         hidden
       >
-        <div class="chapter-number">第 5 步 / 共 9 步</div>
-        <h2 id="heading-4" tabindex="-1">第五节　认识一条请求的组成</h2>
+        <div class="chapter-number">第 4 步 / 共 8 步</div>
+        <h2 id="heading-3" tabindex="-1">第四节　认识一条请求的组成</h2>
         <div class="explain-box">
           <strong
             >学习目标：能说明地址、认证请求头和 JSON 正文各自的作用。</strong
           >
           <p>
-            Base URL 负责拼出目标地址；API Key
-            变成认证请求头；你选的模型和聊天内容进入 JSON 正文。<strong
-              >三者各在各的位置。</strong
+            应用根据服务商配置确定请求地址，必要时整理路径；把 API Key
+            放入认证请求头，把模型与聊天内容写入 JSON 正文。<strong
+              >地址的自动处理由应用负责，具体规则以应用说明为准。</strong
             >
           </p>
         </div>
+        <p class="fineprint">
+          下文及后续 JSON 练习统一使用 OpenAI 兼容的 Chat Completions
+          格式。Responses、Anthropic 和 Gemini
+          的字段与返回结构并不完全相同，应用会按选定接口处理。
+        </p>
         <div class="table-scroll">
           <table>
             <thead>
@@ -759,7 +615,7 @@ API 基础地址：https://api.example.com/v1
               </tr>
               <tr>
                 <td>完整 Endpoint</td>
-                <td>你填的 Base URL ＋ 应用自动补的路径</td>
+                <td>应用根据你填写的服务地址自动确定</td>
               </tr>
               <tr>
                 <td>认证请求头</td>
@@ -872,13 +728,13 @@ Content-Type: application/json
       </section>
       <section
         class="chapter"
-        id="step-5"
-        data-step="5"
-        aria-labelledby="heading-5"
+        id="step-4"
+        data-step="4"
+        aria-labelledby="heading-4"
         hidden
       >
-        <div class="chapter-number">第 6 步 / 共 9 步</div>
-        <h2 id="heading-5" tabindex="-1">练习二　补全请求头与 JSON 正文</h2>
+        <div class="chapter-number">第 5 步 / 共 8 步</div>
+        <h2 id="heading-4" tabindex="-1">练习二　补全请求头与 JSON 正文</h2>
         <div class="explain-box">
           <strong
             >学习目标：能将密钥放入认证请求头，将模型与提问放入正文。</strong
@@ -1000,13 +856,13 @@ Content-Type: application/json
       </section>
       <section
         class="chapter"
-        id="step-6"
-        data-step="6"
-        aria-labelledby="heading-6"
+        id="step-5"
+        data-step="5"
+        aria-labelledby="heading-5"
         hidden
       >
-        <div class="chapter-number">第 7 步 / 共 9 步</div>
-        <h2 id="heading-6" tabindex="-1">练习三　填写密钥并修改 JSON</h2>
+        <div class="chapter-number">第 6 步 / 共 8 步</div>
+        <h2 id="heading-5" tabindex="-1">练习三　填写密钥并修改 JSON</h2>
         <div class="explain-box">
           <strong
             >学习目标：能填写认证信息，并在已有 JSON 中修改两个值。</strong
@@ -1123,13 +979,13 @@ Content-Type: application/json
       </section>
       <section
         class="chapter"
-        id="step-7"
-        data-step="7"
-        aria-labelledby="heading-7"
+        id="step-6"
+        data-step="6"
+        aria-labelledby="heading-6"
         hidden
       >
-        <div class="chapter-number">第 8 步 / 共 9 步</div>
-        <h2 id="heading-7" tabindex="-1">第六节　检查连接问题与返回结果</h2>
+        <div class="chapter-number">第 7 步 / 共 8 步</div>
+        <h2 id="heading-6" tabindex="-1">第五节　检查连接问题与返回结果</h2>
         <div class="explain-box">
           <strong>学习目标：能根据错误信息依次检查地址、密钥和模型。</strong>
           <p>
@@ -1149,8 +1005,7 @@ Content-Type: application/json
               <tr>
                 <td>404 / 路径不存在</td>
                 <td>
-                  是否把完整 Endpoint 当成 Base URL，导致重复 /v1 或
-                  /chat/completions
+                  核对所选接口类型、服务地址与文档；地址格式问题通常由应用处理，仍以具体软件说明为准。
                 </td>
               </tr>
               <tr>
@@ -1280,13 +1135,13 @@ Content-Type: application/json
       </section>
       <section
         class="chapter"
-        id="step-8"
-        data-step="8"
-        aria-labelledby="heading-8"
+        id="step-7"
+        data-step="7"
+        aria-labelledby="heading-7"
         hidden
       >
-        <div class="chapter-number">第 9 步 / 共 9 步</div>
-        <h2 id="heading-8" tabindex="-1">本课整理　迁移到真实应用</h2>
+        <div class="chapter-number">第 8 步 / 共 8 步</div>
+        <h2 id="heading-7" tabindex="-1">本课整理　迁移到真实应用</h2>
         <div class="explain-box">
           <strong>学习目标：能依据操作清单，在可信应用中完成配置。</strong>
           <p>
@@ -1306,7 +1161,8 @@ Content-Type: application/json
             Key 通用。
           </li>
           <li>
-            <strong>填写地址和密钥。</strong>核对这个版本的应用如何补路径。Key
+            <strong>填写地址和密钥。</strong
+            >优先使用内置服务商的默认地址；自定义服务按平台和应用说明填写。Key
             字段通常只粘贴密钥本身，避免引号、额外空格或 Bearer
             前缀；例外以应用文档为准。
           </li>
@@ -1339,8 +1195,8 @@ Content-Type: application/json
         </div>
         <div id="reviewStatus" class="review-status"></div>
         <p>
-          <button class="secondary" data-go="3">再练一次应用连接</button>
-          <button class="secondary" data-go="4">理解背后的请求</button>
+          <button class="secondary" data-go="2">再练一次应用连接</button>
+          <button class="secondary" data-go="3">理解背后的请求</button>
         </p>
         <details>
           <summary>按你使用的应用核对文档</summary>
@@ -1365,6 +1221,22 @@ Content-Type: application/json
               target="_blank"
               rel="noreferrer"
               >教学交互参考</a
+            >
+            <br /><a
+              href="https://developers.openai.com/api/docs/guides/migrate-to-responses"
+              target="_blank"
+              rel="noreferrer"
+              >OpenAI Docs：Chat Completions 与 Responses</a
+            ><br /><a
+              href="https://platform.claude.com/docs/en/api/messages/create"
+              target="_blank"
+              rel="noreferrer"
+              >Anthropic：Messages 接口</a
+            ><br /><a
+              href="https://ai.google.dev/gemini-api/docs/text-generation"
+              target="_blank"
+              rel="noreferrer"
+              >Gemini：文本生成接口</a
             >
           </p>
           <p>

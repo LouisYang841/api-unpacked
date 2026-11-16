@@ -42,6 +42,12 @@ function updateProgress() {
   refreshLessonGates();
 }
 function uiBody() {
+  if ($('useResponses').checked)
+    return {
+      model: $('connectionModel').value || '__选择模型__',
+      instructions: '你是一位耐心的老师。',
+      input: Lesson.prompts.ui,
+    };
   return {
     model: $('connectionModel').value || '__选择模型__',
     messages: [
@@ -57,7 +63,10 @@ function updatePreview(reset = true) {
     $('feedback-ui').replaceChildren();
     $('uiResponse').hidden = false;
   }
-  const endpoint = Lesson.composeEndpoint($('baseUrl').value);
+  const endpoint = Lesson.composeEndpoint(
+    $('baseUrl').value,
+    $('useResponses').checked,
+  );
   const key = $('apiKey').value.trim();
   // Never echo arbitrary entered credentials into the page or logs.
   $('livePreview').textContent =
@@ -71,14 +80,32 @@ function updatePreview(reset = true) {
         : '__等待填写密钥__') +
     '\nContent-Type: application/json\n\n' +
     JSON.stringify(uiBody(), null, 2);
+  if ($('protocolType').value !== 'openai') {
+    $('livePreview').textContent =
+      '所选接口类型与本示例服务不匹配。本服务提供 OpenAI 兼容的 Chat Completions 与 Responses，请按服务商说明选择后再预览。';
+  }
   if (reset)
     $('uiResponse').textContent =
       '配置更新了。点击检测连接，观察地址、密钥与模型是否匹配。';
 }
-['baseUrl', 'apiKey', 'connectionModel'].forEach((id) =>
-  $(id).addEventListener('input', updatePreview),
-);
+[
+  'baseUrl',
+  'apiKey',
+  'connectionModel',
+  'protocolType',
+  'useResponses',
+].forEach((id) => $(id).addEventListener('input', updatePreview));
 updatePreview();
+$('protocolType').addEventListener('change', () => {
+  const openai = $('protocolType').value === 'openai';
+  $('useResponses').disabled = !openai;
+  if (!openai) $('useResponses').checked = false;
+  $('protocolHelp').textContent = openai
+    ? '本示例服务同时支持 Chat Completions 和 Responses。启用 Responses 前，请确认服务商文档明确支持。'
+    : '本示例服务仅提供 OpenAI 兼容接口。真实使用时，应以你所接服务的接口说明为准。';
+  updatePreview();
+});
+$('useResponses').addEventListener('change', () => updatePreview());
 $('toggleKey').addEventListener('click', () => {
   const show = $('apiKey').type === 'password';
   $('apiKey').type = show ? 'text' : 'password';
@@ -306,42 +333,6 @@ function revokeTeachingKey(key) {
     validKeys.size +
     ' 把密钥继续有效。已填入的其他有效密钥无需更换。';
 }
-document.querySelectorAll('[data-address-choice]').forEach((button) =>
-  button.addEventListener('click', () => {
-    const rule = button.dataset.rule,
-      id = 'address-' + rule;
-    if (answeredQuestions.has(id)) return;
-    const correct =
-      button.dataset.addressChoice === Lesson.endpointRules[rule].expected;
-    const result = $('address-feedback-' + rule);
-    $('address-result-' + rule).textContent = Lesson.composeEndpoint(
-      button.dataset.addressChoice,
-      rule,
-    );
-    if (correct) {
-      answeredQuestions.add(id);
-      result.textContent =
-        '回答正确。应用补完路径后，刚好得到服务商提供的完整 Endpoint。';
-      button.classList.add('correct');
-      document
-        .querySelectorAll('[data-rule="' + rule + '"]')
-        .forEach((b) => (b.disabled = true));
-      rewardCorrectAnswer(id, result);
-      refreshLessonGates();
-    } else {
-      result.textContent =
-        '请再检查：最终地址的路径重复了，或者缺少了一段。请根据本题的追加规则重新选择。';
-    }
-    const count = ['base', 'host', 'endpoint'].filter((r) =>
-      answeredQuestions.has('address-' + r),
-    ).length;
-    $('addressProgress').textContent =
-      '本节练习：已完成 ' +
-      count +
-      ' / 3 题。' +
-      (count === 3 ? '三题全部答对，可以继续。' : '请继续完成其余题目。');
-  }),
-);
 const answers = {
   rainbow: '彩虹是阳光进入水滴后发生折射、反射和色散，分出不同颜色而形成的。',
   eclipse: '月食是地球运行到太阳与月球之间，使月球进入地球影子而变暗的现象。',
@@ -364,12 +355,25 @@ function showResponse(id, answer) {
   summary.textContent = '查看原始响应 JSON（后面会逐步讲解）';
   const pre = document.createElement('pre');
   pre.textContent = JSON.stringify(
-    { choices: [{ message: { role: 'assistant', content: answer } }] },
+    id === 'uiResponse' && savedConnection?.useResponses
+      ? {
+          output: [
+            {
+              type: 'message',
+              role: 'assistant',
+              content: [{ type: 'output_text', text: answer }],
+            },
+          ],
+        }
+      : { choices: [{ message: { role: 'assistant', content: answer } }] },
     null,
     2,
   );
   const note = document.createElement('span');
-  note.textContent = '回答在 choices[0].message.content 中。';
+  note.textContent =
+    id === 'uiResponse' && savedConnection?.useResponses
+      ? '此 Responses 文本示例的回答位于 output[0].content[0].text；实际 output 还可能包含其他类型。'
+      : '回答在 choices[0].message.content 中。';
   raw.append(summary, pre, note);
   el.append(title, raw);
 }
@@ -384,11 +388,19 @@ function connectionValues() {
     baseUrl: $('baseUrl').value.trim(),
     key: $('apiKey').value.trim(),
     model: $('connectionModel').value,
+    protocol: $('protocolType').value,
+    useResponses: Boolean($('useResponses').checked),
   };
 }
 function sameConnection(a, b) {
   return (
-    a && b && a.baseUrl === b.baseUrl && a.key === b.key && a.model === b.model
+    a &&
+    b &&
+    a.baseUrl === b.baseUrl &&
+    a.key === b.key &&
+    a.model === b.model &&
+    a.protocol === b.protocol &&
+    a.useResponses === b.useResponses
   );
 }
 function setConnectionNotice(message, bad = false) {
@@ -403,7 +415,9 @@ function invalidateConnection() {
   if (
     fetchedConnection &&
     (values.baseUrl !== fetchedConnection.baseUrl ||
-      values.key !== fetchedConnection.key)
+      values.key !== fetchedConnection.key ||
+      values.protocol !== fetchedConnection.protocol ||
+      values.useResponses !== fetchedConnection.useResponses)
   ) {
     fetchedConnection = null;
     $('connectionModel').replaceChildren(makeOption('请先获取模型列表', ''));
@@ -723,6 +737,9 @@ document.querySelectorAll('[data-reset]').forEach((b) =>
       savedConnection = null;
       connectionTested = false;
       $('providerEnabled').checked = true;
+      $('protocolType').value = 'openai';
+      $('useResponses').checked = false;
+      $('useResponses').disabled = false;
       $('connectionModel').replaceChildren(makeOption('请先获取模型列表', ''));
       $('connectionModel').disabled = true;
       $('modelStatus').textContent = '填写地址和密钥后，获取服务商提供的模型。';
@@ -753,21 +770,19 @@ document.querySelectorAll('[data-reset]').forEach((b) =>
 const chapterNames = [
   '先分清应用与服务商',
   '模拟申请 API Key',
-  '地址究竟填到哪里',
   '练习一：连接第三方应用',
   '应用怎样组成请求',
-  '拓展练习：拖拽请求',
-  '拓展练习：补全 JSON',
+  '巩固练习：拖拽请求',
+  '巩固练习：补全 JSON',
   '连不上时怎样排查',
   '迁移到真实应用',
 ];
 const nextLabels = [
   '下一步：领取教学密钥 →',
-  '下一步：分清地址怎么填 →',
   '下一步：连接第三方应用 →',
   '继续理解：应用怎样发请求 →',
-  '拓展：用卡片拼请求 →',
-  '拓展：自己补全 JSON →',
+  '巩固练习：用卡片拼请求 →',
+  '巩固练习：自己补全 JSON →',
   '下一步：学会排查问题 →',
   '最后：迁移到真实应用 →',
 ];
@@ -1008,17 +1023,12 @@ document.addEventListener('visibilitychange', () => {
 const requirements = {
   0: [['concept-api', '完成 API 概念选择题']],
   1: [['key-created', '命名并创建至少一把有效密钥']],
-  2: [
-    ['address-base', '答对应用 A 的地址题'],
-    ['address-host', '答对应用 B 的地址题'],
-    ['address-endpoint', '答对应用 C 的地址题'],
-  ],
-  3: [['exercise-ui', '完成保存、检测并发送聊天消息']],
-  4: [['concept-request', '答对请求组成选择题']],
-  5: [['exercise-drag', '填对请求头与 JSON 卡片']],
-  6: [['exercise-write', '填对认证密钥与 JSON']],
-  7: [['concept-errors', '答对认证故障选择题']],
-  8: [],
+  2: [['exercise-ui', '完成保存、检测并发送聊天消息']],
+  3: [['concept-request', '答对请求组成选择题']],
+  4: [['exercise-drag', '填对请求头与 JSON 卡片']],
+  5: [['exercise-write', '填对认证密钥与 JSON']],
+  6: [['concept-errors', '答对认证故障选择题']],
+  7: [],
 };
 function requirementDone(id) {
   if (id === 'key-created') return validKeys.size > 0;
@@ -1086,10 +1096,10 @@ document.querySelectorAll('button[data-question]').forEach((button) =>
     }
   }),
 );
-const initial = /^#step-([0-8])$/.exec(location.hash);
+const initial = /^#step-([0-7])$/.exec(location.hash);
 const requestedInitial = initial ? Number(initial[1]) : 0;
 goToChapter(firstIncompleteBefore(requestedInitial) ?? requestedInitial, false);
 window.addEventListener('hashchange', () => {
-  const match = /^#step-([0-8])$/.exec(location.hash);
+  const match = /^#step-([0-7])$/.exec(location.hash);
   if (match) goToChapter(Number(match[1]));
 });
