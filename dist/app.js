@@ -1,5 +1,7 @@
 const $ = (id) => document.getElementById(id);
 const completed = new Set();
+let keyIssued = false;
+const scenarioStates = new Map();
 function feedback(id, errors, success) {
   const box = $('feedback-' + id);
   box.replaceChildren();
@@ -18,6 +20,7 @@ function feedback(id, errors, success) {
   } else {
     box.textContent = success;
     completed.add(id);
+    celebrate(box);
     updateProgress();
   }
 }
@@ -27,54 +30,127 @@ function updateProgress() {
   $('completion').hidden = completed.size !== 3;
   updateChapterMarks();
 }
-document.querySelectorAll('[data-answer]').forEach((b) =>
-  b.addEventListener('click', () => {
-    $('quizFeedback').textContent =
-      b.dataset.answer === 'right'
-        ? '答对了。客户端或它的后端会把消息包装成请求，再发送给模型服务。'
-        : '再想想：你输入的是文字，负责把文字包装成网络请求的是应用客户端或它的后端。';
-    document
-      .querySelectorAll('[data-answer]')
-      .forEach((x) =>
-        x.classList.toggle('correct', x === b && b.dataset.answer === 'right'),
-      );
-  }),
-);
 function uiBody() {
   return {
-    model: 'demo-small',
+    model: $('connectionModel').value || '__选择模型__',
     messages: [
       { role: 'system', content: '你是一位耐心的老师。' },
-      {
-        role: $('role').value || '__选择角色__',
-        content: $('prompt').value || '__填写提问__',
-      },
+      { role: 'user', content: Lesson.prompts.ui },
     ],
   };
 }
 function updatePreview() {
-  const method = $('method').value || '__选择方法__';
+  stopScenario('ui');
+  const endpoint = Lesson.composeEndpoint($('baseUrl').value);
+  const key = $('apiKey').value.trim();
+  // Never echo arbitrary entered credentials into the page or logs.
   $('livePreview').textContent =
-    method + ' /v1/chat/completions\n\n' + JSON.stringify(uiBody(), null, 2);
-  $('uiResponse').textContent = '检查后，这里会显示模型的模拟回答。';
+    'POST ' +
+    (endpoint || '__等待填写地址__') +
+    '\nAuthorization: Bearer ' +
+    (key === 'this-is-a-key'
+      ? key
+      : key
+        ? '[已隐藏：本课只接收教学密钥]'
+        : '__等待填写密钥__') +
+    '\nContent-Type: application/json\n\n' +
+    JSON.stringify(uiBody(), null, 2);
+  $('uiResponse').textContent =
+    '配置更新了。点击检测连接，观察地址、密钥与模型是否匹配。';
 }
-['method', 'role', 'prompt'].forEach((id) =>
+['baseUrl', 'apiKey', 'connectionModel'].forEach((id) =>
   $(id).addEventListener('input', updatePreview),
 );
 updatePreview();
-$('requestForm').after($('uiResponse'));
+$('toggleKey').addEventListener('click', () => {
+  const show = $('apiKey').type === 'password';
+  $('apiKey').type = show ? 'text' : 'password';
+  $('toggleKey').setAttribute('aria-pressed', String(show));
+  $('toggleKey').textContent = show ? '隐藏教学密钥' : '显示教学密钥';
+});
+$('createKey').addEventListener('click', () => {
+  keyIssued = true;
+  $('keyReceipt').hidden = false;
+  $('createKey').disabled = true;
+  $('createKey').textContent = '教学密钥已签发';
+  $('keyIssueStatus').textContent =
+    '已收到教学密钥。复制或记住 this-is-a-key，下一步带到第三方应用设置里。';
+  $('keyReceipt').classList.remove('key-arrival');
+  void $('keyReceipt').offsetWidth;
+  $('keyReceipt').classList.add('key-arrival');
+  celebrate($('keyReceipt'));
+});
+$('copyKey').addEventListener('click', async () => {
+  try {
+    if (!window.navigator.clipboard?.writeText) throw new Error('unavailable');
+    await window.navigator.clipboard.writeText('this-is-a-key');
+    $('keyIssueStatus').textContent = '已复制教学密钥：this-is-a-key。';
+  } catch {
+    $('issuedKey').focus();
+    $('issuedKey').select?.();
+    $('keyIssueStatus').textContent = '可以手动复制上方密钥：this-is-a-key。';
+  }
+});
+$('revokeKey').addEventListener('click', () => {
+  keyIssued = false;
+  completed.clear();
+  updateProgress();
+  $('keyReceipt').hidden = true;
+  $('createKey').disabled = false;
+  $('createKey').textContent = '重新创建教学密钥';
+  $('keyIssueStatus').textContent =
+    '教学密钥已撤销，后面的认证检查将无法通过。可重新创建；真实平台通常会签发不同的新密钥，本课始终使用同一个无效占位符。';
+  ['ui', 'drag', 'write'].forEach((id) => {
+    stopScenario(id, '密钥已撤销，请重新领取后验证。');
+    $('feedback-' + id).replaceChildren();
+  });
+  $('uiResponse').textContent = '凭证已撤销，请重新创建教学密钥后再检测连接。';
+  $('dragResponse').hidden = true;
+  $('writeResponse').hidden = true;
+});
+function resetAddressLab() {
+  $('addressFeedback').textContent =
+    '请按当前应用会补的路径，选一个合适的地址。';
+  $('addressResult').textContent = '等待选择地址';
+  document
+    .querySelectorAll('[data-address-choice]')
+    .forEach((b) => b.classList.remove('correct'));
+}
+$('addressRule').addEventListener('change', resetAddressLab);
+document.querySelectorAll('[data-address-choice]').forEach((b) =>
+  b.addEventListener('click', () => {
+    const rule = $('addressRule').value;
+    const correct =
+      b.dataset.addressChoice === Lesson.endpointRules[rule].expected;
+    $('addressResult').textContent = Lesson.composeEndpoint(
+      b.dataset.addressChoice,
+      rule,
+    );
+    $('addressFeedback').textContent = correct
+      ? '选对了！应用补完路径后，刚好得到服务商给的完整 Endpoint。'
+      : '看看下面的最终地址：路径重复了，或者少了一段。换一个基础地址，使最终地址刚好等于完整 Endpoint。';
+    document
+      .querySelectorAll('[data-address-choice]')
+      .forEach((x) => x.classList.toggle('correct', x === b && correct));
+  }),
+);
 const answers = {
   rainbow: '彩虹是阳光进入水滴后发生折射、反射和色散，分出不同颜色而形成的。',
   eclipse: '月食是地球运行到太阳与月球之间，使月球进入地球影子而变暗的现象。',
 };
 function showResponse(id, answer) {
+  const scenarioId = id.replace('Response', '');
+  runScenario(
+    scenarioId,
+    scenarioId === 'write' ? Lesson.prompts.write : Lesson.prompts.ui,
+    answer,
+  );
   const el = $(id);
   el.hidden = false;
   el.replaceChildren();
   const title = document.createElement('strong');
   title.textContent = '200 OK · 模拟响应（预设示例，并未调用模型）';
-  const reply = document.createElement('p');
-  reply.textContent = '模型回答：' + answer;
+
   const raw = document.createElement('details');
   const summary = document.createElement('summary');
   summary.textContent = '查看原始响应 JSON（后面会逐步讲解）';
@@ -87,38 +163,46 @@ function showResponse(id, answer) {
   const note = document.createElement('span');
   note.textContent = '回答在 choices[0].message.content 中。';
   raw.append(summary, pre, note);
-  el.append(title, reply, raw);
+  el.append(title, raw);
 }
 $('requestForm').addEventListener('submit', (e) => {
   e.preventDefault();
-  const errors = Lesson.validateUI({
-    method: $('method').value,
-    role: $('role').value,
-    prompt: $('prompt').value,
-  });
+  const errors = Lesson.validateConnection(
+    {
+      baseUrl: $('baseUrl').value,
+      key: $('apiKey').value,
+      model: $('connectionModel').value,
+    },
+    keyIssued,
+  );
   feedback(
     'ui',
     errors,
-    '填写正确！POST 提交消息，user 表示用户提问，content 存放提问内容。你已完成第一关。先看模拟响应，再点页面底部的“下一步”，学习 JSON 的写法。',
+    '模拟连接成功！地址正确，密钥通过教学验证，模型匹配。应用已替你把设置组成请求，下面是第一次对话的模拟回答。',
   );
   if (!errors.length) showResponse('uiResponse', answers.rainbow);
-  else $('uiResponse').textContent = '先按提示调整，再试一次。';
+  else {
+    $('uiResponse').textContent =
+      '模拟连接未通过。按下面的提示核对服务地址、密钥和模型。';
+    scenarioError('ui', errors);
+  }
 });
 const cards = [
   { id: 'assistant', text: '"assistant"' },
   { id: 'content', text: '"用一句话解释彩虹。"' },
   { id: 'messages', text: '"messages"' },
-  { id: 'user', text: '"user"' },
+  { id: 'auth', text: 'this-is-a-key' },
   { id: 'model', text: '"model"' },
 ];
-let slots = { key: null, role: null, content: null },
+let slots = { key: null, auth: null, content: null },
   selected = null;
-const slotNames = { key: '① 字段名', role: '② 角色', content: '③ 提问内容' };
+const slotNames = { auth: '① 密钥', key: '② 字段名', content: '③ 提问内容' };
 const dragAnnouncement = document.createElement('p');
 dragAnnouncement.className = 'drag-help';
 dragAnnouncement.setAttribute('role', 'status');
 $('cardBank').after(dragAnnouncement);
 function renderCards() {
+  stopScenario('drag');
   const bank = $('cardBank');
   bank.replaceChildren();
   cards
@@ -195,29 +279,31 @@ document.querySelectorAll('[data-slot]').forEach((b) => {
 });
 renderCards();
 $('checkDrag').addEventListener('click', () => {
-  const errors = [];
+  const errors = Lesson.validateKey(
+    slots.auth === 'auth' ? 'this-is-a-key' : '',
+    keyIssued,
+  );
   if (slots.key !== 'model')
-    errors.push(
-      '空位①后面是模型名称 demo-small，因此字段名应是 "model"；messages 对应的是整个消息列表。',
-    );
-  if (slots.role !== 'user')
-    errors.push('空位②是提问者的角色，应放 "user"；assistant 表示模型的回复。');
+    errors.push('正文空位②后面是 demo-small，所以字段名应为 "model"。');
   if (slots.content !== 'content')
-    errors.push('空位③是 content 的值，应放具体提问“用一句话解释彩虹。”。');
+    errors.push('正文空位③应放入具体提问“用一句话解释彩虹。”。');
   feedback(
     'drag',
     errors,
-    '拼对了！卡片组合成了和表单相同的 JSON 正文。字段名和值都要用双引号包起来。先核对模拟响应，再点页面底部的“下一步”，亲手补全 JSON。',
+    '拼对了！密钥位于 Authorization 请求头；模型和提问位于 JSON 正文。两部分一起构成应用发送的请求。',
   );
   if (!errors.length) showResponse('dragResponse', answers.rainbow);
-  else $('dragResponse').hidden = true;
+  else {
+    $('dragResponse').hidden = true;
+    scenarioError('drag', errors);
+  }
 });
 const skeleton = JSON.stringify(
   {
     model: '__填写__',
     messages: [
       { role: 'system', content: '你是一位耐心的老师。' },
-      { role: '__填写__', content: '__填写__' },
+      { role: 'user', content: '__填写__' },
     ],
   },
   null,
@@ -225,6 +311,7 @@ const skeleton = JSON.stringify(
 );
 $('jsonEditor').value = skeleton;
 $('jsonEditor').addEventListener('input', () => {
+  stopScenario('write');
   $('writeResponse').hidden = true;
 });
 $('formatJson').addEventListener('click', () => {
@@ -248,20 +335,36 @@ $('formatJson').addEventListener('click', () => {
 });
 $('checkWrite').addEventListener('click', () => {
   const result = Lesson.parseAndValidate($('jsonEditor').value);
+  result.errors.unshift(...Lesson.validateKey($('writeKey').value, keyIssued));
   feedback(
     'write',
     result.errors,
-    '补全正确！你已经能把模型、角色和提问直接写进 JSON。正文只是请求的一部分，真实发送时仍需方法、地址和请求头。',
+    '补全正确！教学密钥在请求头中通过认证，模型和新问题写在 JSON 中。你已把同一把密钥用于三种请求配置方式。',
   );
   if (!result.errors.length) showResponse('writeResponse', answers.eclipse);
-  else $('writeResponse').hidden = true;
+  else {
+    $('writeResponse').hidden = true;
+    scenarioError('write', result.errors);
+  }
 });
 const hints = {
-  ui: '提交通常用 POST。提问的人是 user。把“用一句话解释彩虹。”填入提问内容；不是把预期回答填进去。',
-  drag: '① model 选择模型；② user 是提问者；③ content 的值是整句提问。assistant 和 messages 两张卡片在这次填空中用不到。',
+  ui: '先到第 2 步模拟创建密钥。Base URL 填 https://api.example.com/v1；API Key 只填 this-is-a-key；模型选 demo-small。',
+  drag: '① 教学密钥 this-is-a-key 放在 Bearer 后面；② 模型字段名是 "model"；③ 放整句彩虹提问。密钥不属于 JSON。',
   write:
-    '按顺序把三个占位符替换为 demo-small、user、用一句话解释月食。保留外面的英文双引号和原有 JSON 结构。',
+    '上方 Key 填 this-is-a-key；下面 JSON 两个占位符按顺序替换成 demo-small、用一句话解释月食。保留双引号。',
 };
+$('writeKey').addEventListener('input', () => {
+  stopScenario('write');
+  const value = $('writeKey').value.trim();
+  $('writeHeaderPreview').textContent =
+    'Authorization: Bearer ' +
+    (value === 'this-is-a-key'
+      ? value
+      : value
+        ? '[只接收教学密钥]'
+        : '__填写密钥__');
+  $('writeResponse').hidden = true;
+});
 document.querySelectorAll('[data-hint]').forEach((b) =>
   b.addEventListener('click', () => {
     const box = $('feedback-' + b.dataset.hint);
@@ -272,46 +375,55 @@ document.querySelectorAll('[data-hint]').forEach((b) =>
 document.querySelectorAll('[data-reset]').forEach((b) =>
   b.addEventListener('click', () => {
     const id = b.dataset.reset;
+    stopScenario(id);
     completed.delete(id);
     updateProgress();
     $('feedback-' + id).replaceChildren();
     if (id === 'ui') {
-      $('requestForm').reset();
+      ['baseUrl', 'apiKey', 'connectionModel'].forEach(
+        (id) => ($(id).value = ''),
+      );
+      $('apiKey').type = 'password';
+      $('toggleKey').textContent = '显示教学密钥';
+      $('toggleKey').setAttribute('aria-pressed', 'false');
       updatePreview();
     }
     if (id === 'drag') {
-      slots = { key: null, role: null, content: null };
+      slots = { key: null, auth: null, content: null };
       selected = null;
       dragAnnouncement.textContent = '已重置，可以重新选择卡片。';
       renderCards();
     }
     if (id === 'write') {
       $('jsonEditor').value = skeleton;
+      $('writeKey').value = '';
+      $('writeHeaderPreview').textContent =
+        'Authorization: Bearer __填写密钥__';
       $('writeResponse').hidden = true;
     }
   }),
 );
 
 const chapterNames = [
-  '先认识 API',
-  '拆开一次请求',
-  '认识 API Key',
-  '练习一：填写表单',
-  '把表单写成 JSON',
-  '练习二：拖拽 JSON',
-  '练习三：补全 JSON',
-  '读懂返回的回答',
-  '准备真实调用',
+  '先分清应用与服务商',
+  '模拟申请 API Key',
+  '地址究竟填到哪里',
+  '练习一：连接第三方应用',
+  '应用怎样组成请求',
+  '拓展练习：拖拽请求',
+  '拓展练习：补全 JSON',
+  '连不上时怎样排查',
+  '迁移到真实应用',
 ];
 const nextLabels = [
-  '下一步：认识请求 →',
-  '下一步：认识 API Key →',
-  '下一步：照着填表 →',
-  '下一步：认识 JSON →',
-  '下一步：用卡片拼 JSON →',
-  '下一步：自己补全 JSON →',
-  '下一步：读懂响应 →',
-  '下一步：准备真实调用 →',
+  '下一步：领取教学密钥 →',
+  '下一步：分清地址怎么填 →',
+  '下一步：连接第三方应用 →',
+  '继续理解：应用怎样发请求 →',
+  '拓展：用卡片拼请求 →',
+  '拓展：自己补全 JSON →',
+  '下一步：学会排查问题 →',
+  '最后：迁移到真实应用 →',
 ];
 const visited = new Set([0]);
 let currentChapter = 0;
@@ -321,7 +433,7 @@ function updateChapterMarks() {
       i === currentChapter ? ' ← 当前' : visited.has(i) ? ' · 已读' : '';
   }
   const pending = [
-    ['ui', '表单'],
+    ['ui', '第三方应用连接'],
     ['drag', '拖拽 JSON'],
     ['write', '补全 JSON'],
   ]
@@ -329,12 +441,13 @@ function updateChapterMarks() {
     .map(([, name]) => name);
   $('reviewStatus').textContent = pending.length
     ? '尚可继续练习：' + pending.join('、') + '。可用下方按钮或目录返回。'
-    : '本课讲解和三项练习都已完成，可以随时从目录返回复习。';
+    : '已完成应用连接与两项请求拓展练习；可以带着迁移清单去配置可信的真实应用。';
 }
 function goToChapter(index, moveFocus = true) {
   if (!Number.isInteger(index) || index < 0 || index >= chapterNames.length)
     return;
   currentChapter = index;
+  if (index !== 0) stopDemo();
   visited.add(index);
   document
     .querySelectorAll('[data-step]')
@@ -354,14 +467,12 @@ function goToChapter(index, moveFocus = true) {
   history.replaceState(null, '', '#step-' + index);
   if (moveFocus) {
     $('heading-' + index).focus({ preventScroll: true });
-    document
-      .querySelector('.reading-progress')
-      .scrollIntoView({
-        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
-          ? 'instant'
-          : 'smooth',
-        block: 'start',
-      });
+    document.querySelector('.reading-progress').scrollIntoView({
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? 'instant'
+        : 'smooth',
+      block: 'start',
+    });
   }
 }
 $('prevStep').addEventListener('click', () => goToChapter(currentChapter - 1));
@@ -371,14 +482,164 @@ document
   .forEach((b) =>
     b.addEventListener('click', () => goToChapter(Number(b.dataset.go))),
   );
-document.querySelectorAll('[data-key-answer]').forEach((b) =>
-  b.addEventListener('click', () => {
-    $('keyFeedback').textContent =
-      b.dataset.keyAnswer === 'right'
-        ? '答对了。本例放在 Authorization 请求头中；真实使用时以对应文档为准。'
-        : '再看一下上面的示范：API Key 是认证凭证，应放在文档指定的认证请求头，不是模型名或提问内容。';
-  }),
-);
+
+function reducedMotion() {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+function celebrate(el) {
+  el.classList.remove('success-flash');
+  void el.offsetWidth;
+  el.classList.add('success-flash');
+  if (reducedMotion()) return;
+  el.querySelector('.celebration')?.remove();
+  const overlay = document.createElement('span');
+  overlay.className = 'celebration';
+  overlay.setAttribute('aria-hidden', 'true');
+  for (let i = 0; i < 12; i++) {
+    const p = document.createElement('i');
+    p.style.setProperty('--x', (i - 5.5) * 14 + 'px');
+    p.style.setProperty('--rot', (i % 2 ? 1 : -1) * (80 + i * 21) + 'deg');
+    p.style.setProperty('--delay', (i % 4) * 35 + 'ms');
+    p.style.background = ['#3c99c7', '#e5ad52', '#66ad88', '#c787a6'][i % 4];
+    overlay.append(p);
+  }
+  overlay.addEventListener('animationend', () => overlay.remove(), {
+    once: true,
+  });
+  el.append(overlay);
+}
+function stopScenario(id, message = '等待你完成请求设置。') {
+  const state = scenarioStates.get(id);
+  if (state) {
+    window.clearInterval(state.timer);
+    window.clearTimeout(state.wait);
+    scenarioStates.delete(id);
+  }
+  const status = $('scenario-status-' + id);
+  if (status) {
+    status.textContent = message;
+    status.className = 'scenario-status';
+  }
+  const messages = $('chat-messages-' + id);
+  if (messages) {
+    messages.replaceChildren();
+    const p = document.createElement('p');
+    p.className = 'chat-empty';
+    p.textContent = '发送后，你的消息和模型回复会出现在这里。';
+    messages.append(p);
+  }
+}
+function scenarioError(id, errors) {
+  stopScenario(id);
+  const status = $('scenario-status-' + id);
+  status.classList.add('failed');
+  status.textContent = '配置检查未通过，尚未发送请求。';
+  const bubble = document.createElement('p');
+  bubble.className = 'chat-error';
+  bubble.textContent = errors[0] || '请检查连接设置。';
+  $('chat-messages-' + id).replaceChildren(bubble);
+}
+function runScenario(id, prompt, answer) {
+  stopScenario(id);
+  const messages = $('chat-messages-' + id),
+    status = $('scenario-status-' + id);
+  messages.replaceChildren();
+  const user = document.createElement('div');
+  user.className = 'chat-bubble user-bubble';
+  user.textContent = prompt;
+  messages.append(user);
+  const reply = document.createElement('div');
+  reply.className = 'chat-bubble model-bubble';
+  reply.textContent = '模型正在思考…';
+  messages.append(reply);
+  $('scenario-' + id).scrollIntoView({
+    behavior: reducedMotion() ? 'instant' : 'smooth',
+    block: 'nearest',
+  });
+  const state = { timer: null, wait: null };
+  scenarioStates.set(id, state);
+  status.textContent = '请求已发出 → 服务验证教学密钥 → 等待首段回答';
+  status.classList.add('working');
+  function finish() {
+    window.clearInterval(state.timer);
+    reply.textContent = answer;
+    reply.classList.remove('streaming');
+    status.textContent = '接收完成 · 密钥通过教学验证 · 200 OK（模拟）';
+    status.className = 'scenario-status complete';
+    scenarioStates.delete(id);
+    celebrate($('scenario-' + id));
+  }
+  if (reducedMotion()) {
+    finish();
+    return;
+  }
+  state.wait = window.setTimeout(() => {
+    if (scenarioStates.get(id) !== state) return;
+    reply.textContent = '';
+    reply.classList.add('streaming');
+    status.textContent = '密钥验证通过 → 正在逐段接收回答…';
+    let pos = 0;
+    state.timer = window.setInterval(() => {
+      if (scenarioStates.get(id) !== state) return;
+      pos += 2;
+      reply.textContent = answer.slice(0, pos);
+      messages.scrollTop = messages.scrollHeight;
+      if (pos >= answer.length) finish();
+    }, 65);
+  }, 650);
+}
+const demoCaptions = [
+  '应用读取 Base URL、API Key 和模型设置，准备你的提问。',
+  '应用拼出完整地址，把密钥放进请求头，把模型与消息放进正文。',
+  '服务验证密钥和权限。验证通过后，模型开始处理这条消息。',
+  '响应逐段返回。应用把收到的文字显示在聊天窗口里。',
+];
+let demoStage = 0,
+  demoTimer = null;
+function paintDemo() {
+  document
+    .querySelectorAll('[data-demo-stage]')
+    .forEach((n) =>
+      n.classList.toggle('active', Number(n.dataset.demoStage) === demoStage),
+    );
+  $('animationTrack').style.setProperty('--phase', demoStage);
+  $('animationCaption').textContent = demoCaptions[demoStage];
+}
+function stopDemo() {
+  if (demoTimer !== null) {
+    window.clearInterval(demoTimer);
+    demoTimer = null;
+  }
+  $('playDemo').textContent = '重新播放 ▶';
+}
+function startDemo() {
+  if (demoTimer !== null) {
+    stopDemo();
+    return;
+  }
+  demoStage = 0;
+  paintDemo();
+  $('playDemo').textContent = '暂停演示 Ⅱ';
+  demoTimer = window.setInterval(() => {
+    demoStage++;
+    if (demoStage >= demoCaptions.length) {
+      demoStage = demoCaptions.length - 1;
+      stopDemo();
+      return;
+    }
+    paintDemo();
+  }, 1800);
+}
+$('playDemo').addEventListener('click', startDemo);
+$('stepDemo').addEventListener('click', () => {
+  stopDemo();
+  demoStage = (demoStage + 1) % demoCaptions.length;
+  paintDemo();
+});
+paintDemo();
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) stopDemo();
+});
 const initial = /^#step-([0-8])$/.exec(location.hash);
 goToChapter(initial ? Number(initial[1]) : 0, false);
 window.addEventListener('hashchange', () => {

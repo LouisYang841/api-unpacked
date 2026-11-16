@@ -4,19 +4,19 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="theme-color" content="#eef2f5" />
-    <title>一起学会使用大模型 API · 分步教程</title>
+    <title>把模型接到第三方聊天应用 · API 入门</title>
     <meta
       name="description"
-      content="像读教材一样，一步步认识 API、API Key、请求与 JSON。先讲解再练习，完成表单、拖拽和 JSON 补全三关。"
+      content="分步学习在第三方聊天应用里选择服务、填写 Base URL、申请并使用 API Key、添加模型；通过模拟连接和 JSON 练习理解 API 请求。"
     />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <main class="textbook">
       <header class="book-header">
-        <p class="book-label">从聊天应用出发 · 零基础入门</p>
-        <h1>一起学会使用大模型 API</h1>
-        <p>跟着讲解往下走。每次只学一小步，不用自己找重点。</p>
+        <p class="book-label">从官方聊天应用出发 · 零基础迁移教程</p>
+        <h1>把模型接到第三方聊天应用</h1>
+        <p>学会填地址和密钥，完成第一次对话，再看懂背后的请求。</p>
       </header>
       <div class="reading-progress">
         <span id="chapterProgress">当前：第 1 步 / 共 9 步</span
@@ -29,47 +29,47 @@
         <ol>
           <li>
             <button data-go="0">
-              先认识 API<span id="chapter-mark-0"></span>
+              先分清应用与服务商<span id="chapter-mark-0"></span>
             </button>
           </li>
           <li>
             <button data-go="1">
-              拆开一次请求<span id="chapter-mark-1"></span>
+              模拟申请 API Key<span id="chapter-mark-1"></span>
             </button>
           </li>
           <li>
             <button data-go="2">
-              认识 API Key<span id="chapter-mark-2"></span>
+              地址究竟填到哪里<span id="chapter-mark-2"></span>
             </button>
           </li>
           <li>
             <button data-go="3">
-              练习一：填写表单<span id="chapter-mark-3"></span>
+              练习一：连接第三方应用<span id="chapter-mark-3"></span>
             </button>
           </li>
           <li>
             <button data-go="4">
-              把表单写成 JSON<span id="chapter-mark-4"></span>
+              应用怎样组成请求<span id="chapter-mark-4"></span>
             </button>
           </li>
           <li>
             <button data-go="5">
-              练习二：拖拽 JSON<span id="chapter-mark-5"></span>
+              拓展练习：拖拽请求<span id="chapter-mark-5"></span>
             </button>
           </li>
           <li>
             <button data-go="6">
-              练习三：补全 JSON<span id="chapter-mark-6"></span>
+              拓展练习：补全 JSON<span id="chapter-mark-6"></span>
             </button>
           </li>
           <li>
             <button data-go="7">
-              读懂返回的回答<span id="chapter-mark-7"></span>
+              连不上时怎样排查<span id="chapter-mark-7"></span>
             </button>
           </li>
           <li>
             <button data-go="8">
-              准备真实调用<span id="chapter-mark-8"></span>
+              迁移到真实应用<span id="chapter-mark-8"></span>
             </button>
           </li>
         </ol>
@@ -94,59 +94,105 @@
         aria-labelledby="heading-0"
       >
         <div class="chapter-number">第 1 步 / 共 9 步</div>
-        <h2 id="heading-0" tabindex="-1">先从你熟悉的“发送消息”说起</h2>
+        <h2 id="heading-0" tabindex="-1">换一个聊天应用，模型从哪里来？</h2>
         <div class="explain-box">
-          <strong>这一小步：知道 API 在做什么。</strong>
-          <p>
-            假设你在聊天应用里输入：<b>“用一句话解释彩虹。”</b>，然后按下发送。稍等片刻，模型就给出了回答。
-          </p>
-          <p>
-            应用需要把你的话交给模型服务，再取回结果。<strong
-              >API 就是软件之间约定好的办事接口。</strong
-            >应用按它规定的方式提交任务，服务按约定返回结果。
-          </p>
-        </div>
-        <h3>① 先看一遍消息的去向</h3>
-        <div
-          class="flow"
-          aria-label="你输入提问，应用发送请求，模型服务返回响应"
-        >
-          <div><b>你</b><span>输入一句提问</span></div>
-          <span class="flow-arrow">→</span>
-          <div><b>聊天应用</b><span>把提问装进请求</span></div>
-          <span class="flow-arrow">⇄</span>
-          <div><b>模型服务</b><span>生成并返回回答</span></div>
-        </div>
-        <p>
-          应用发出去的任务叫<strong>请求（request）</strong>，服务送回来的结果叫<strong>响应（response）</strong>。客户端或它的后端通常会替你处理这次交流。
-        </p>
-        <h3>② 换成自己调用 API，会有什么不同？</h3>
-        <p>
-          你也可以用 API
-          调试工具或自己的程序，向模型服务提交同样的提问。区别在于：<strong
-            >原本由应用填好的请求内容，现在需要你来指定。</strong
+          <strong
+            >本课目标：把服务商的模型，接到你想用的第三方聊天应用。</strong
           >
+          <p>
+            你可能习惯直接打开官方应用聊天。换到第三方聊天应用后，界面换了，但它仍然需要连接一个模型服务。你通常需要准备<strong
+              >服务地址、API Key 和模型名称</strong
+            >。
+          </p>
+        </div>
+        <h3>① 先分清三个角色</h3>
+        <div class="flow">
+          <div><b>第三方应用</b><span>你操作的聊天界面</span></div>
+          <span class="flow-arrow">⇄</span>
+          <div><b>服务商 API</b><span>接收任务的接口</span></div>
+          <span class="flow-arrow">⇄</span>
+          <div><b>模型</b><span>生成回答</span></div>
+        </div>
+        <div class="explain-animation">
+          <div class="animation-head">
+            <strong>看一次“发送消息”的全过程</strong><span>教学动画</span>
+          </div>
+          <div class="animation-track" id="animationTrack">
+            <div class="demo-station" data-demo-stage="0">
+              <b>应用</b><small>读取地址与 Key</small>
+            </div>
+            <div class="demo-station" data-demo-stage="1">
+              <b>请求</b><small>带上消息发出</small>
+            </div>
+            <div class="demo-station" data-demo-stage="2">
+              <b>服务</b><small>验证密钥并生成</small>
+            </div>
+            <div class="demo-station" data-demo-stage="3">
+              <b>回复</b><small>逐段回到聊天框</small>
+            </div>
+            <span class="moving-envelope" aria-hidden="true">✉</span>
+          </div>
+          <p id="animationCaption" role="status">
+            应用先读取连接设置：发往哪里，使用哪把调用密钥。
+          </p>
+          <div class="animation-actions">
+            <button id="playDemo" class="secondary" type="button">
+              播放一次对话 ▶</button
+            ><button id="stepDemo" class="text-button" type="button">
+              逐步看下一段 →
+            </button>
+          </div>
+        </div>
+        <p>
+          <strong>API 是软件之间约定好的接口。</strong
+          >第三方应用按约定向它发送一次任务，这叫<strong>请求</strong>；服务返回的结果叫<strong>响应</strong>。LLM
+          是“大语言模型”的简称。
+        </p>
+        <h3>② 配置时，你负责哪部分？</h3>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>你在应用里设置</th>
+                <th>用来告诉应用</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>服务商 / 接口类型</td>
+                <td>按哪一种格式交流</td>
+              </tr>
+              <tr>
+                <td>API 地址 / Base URL</td>
+                <td>把请求发到哪里</td>
+              </tr>
+              <tr>
+                <td>API Key</td>
+                <td>使用谁的调用权限和额度</td>
+              </tr>
+              <tr>
+                <td>模型 / Model ID</td>
+                <td>让服务商运行哪个模型</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          设置好之后，<strong>应用会替你组成并发送请求</strong>。日常聊天一般不需要手写
+          JSON，也不需要手动设置 HTTP 方法。
         </p>
         <div class="remember">
-          <b>本步记住</b>
+          <b>先完成连接，再理解原理</b>
           <p>
-            API 是接口；请求是交给接口的一次任务；响应是服务返回的结果。LLM
-            是“大语言模型”的简称。
+            前四步带你领取教学密钥、分清地址、配置应用。后面再拆开应用生成的请求，保留卡片和
+            JSON 拓展练习。
           </p>
         </div>
-        <div class="quick-check">
-          <div>
-            <span class="eyebrow">先想一想</span>
-            <h3>在聊天应用里点“发送”，谁通常在帮你构造 API 请求？</h3>
-          </div>
-          <div class="quiz-options">
-            <button data-answer="wrong">模型自己</button
-            ><button data-answer="right">客户端或它的后端</button
-            ><button data-answer="wrong">键盘</button>
-          </div>
-          <p id="quizFeedback" role="status"></p>
-        </div>
-        <p class="transition">接下来，我们看看这份“任务单”上需要写什么。</p>
+        <p>
+          换应用也不等于自动迁移聊天记录或会员权益。API
+          额度通常单独管理；是否支持导入旧对话，要看具体应用。
+        </p>
+        <p class="transition">下一步，先到模拟服务商控制台领一把调用密钥。</p>
       </section>
       <section
         class="chapter"
@@ -156,88 +202,76 @@
         hidden
       >
         <div class="chapter-number">第 2 步 / 共 9 步</div>
-        <h2 id="heading-1" tabindex="-1">一份请求，要交代四件事</h2>
+        <h2 id="heading-1" tabindex="-1">先在服务商控制台，创建一把 API Key</h2>
         <div class="explain-box">
-          <strong>这一小步：看懂请求的四个部分。</strong>
+          <strong
+            >这一小步：模拟“创建密钥 → 收到密钥 → 带到应用中使用”。</strong
+          >
           <p>
-            把请求想成一份任务单：写清楚<strong>寄到哪里、要做什么、如何验证身份</strong>，再写<strong>具体任务</strong>。这里学习的是通过
-            HTTP 发送的网络请求。
+            API Key
+            是服务商签发的秘密凭证。服务收到请求后用它验证调用权限，并关联额度和用量。<strong
+              >你的登录密码不能当作 API Key。</strong
+            >
+          </p>
+          <p>
+            下面是虚构服务商的控制台，无需注册、登录或付费。点一次“创建教学密钥”，然后保留它，后面三项练习都会用到。
           </p>
         </div>
-        <h3>① 对照任务单，逐项认识</h3>
-        <div class="table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>任务单上的问题</th>
-                <th>请求中的名称</th>
-                <th>本课的例子</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>寄到哪里？</td>
-                <td>地址 Endpoint</td>
-                <td>
-                  <code>https://api.example.com/v1/chat/completions</code>
-                </td>
-              </tr>
-              <tr>
-                <td>要做什么？</td>
-                <td>方法 Method</td>
-                <td><code>POST</code>：提交消息，生成回答</td>
-              </tr>
-              <tr>
-                <td>用什么身份和格式？</td>
-                <td>请求头 Headers</td>
-                <td>携带密钥；声明正文是 JSON 格式</td>
-              </tr>
-              <tr>
-                <td>具体是什么任务？</td>
-                <td>正文 Body</td>
-                <td>选择模型，提供消息内容</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <h3>② 跟着读一遍这条请求</h3>
-        <div class="worked-line">
-          <span>方法和地址</span
-          ><code>POST https://api.example.com/v1/chat/completions</code>
-          <p>
-            向这个地址提交一次生成任务。<code>GET</code>
-            常用于读取已有资源，本课提交消息用 <code>POST</code>。
+        <div class="provider-console">
+          <div class="console-heading">
+            <strong>示例模型服务 · 控制台</strong><span>本地模拟</span>
+          </div>
+          <div class="provider-facts">
+            <p>API 基础地址：<code>https://api.example.com/v1</code></p>
+            <p>
+              完整聊天接口：<code
+                >https://api.example.com/v1/chat/completions</code
+              >
+            </p>
+            <p>可用模型 ID：<code>demo-small</code></p>
+          </div>
+          <button class="primary" id="createKey" type="button">
+            创建教学密钥
+          </button>
+          <div id="keyReceipt" hidden>
+            <p class="issued-label">已创建 · 本次练习可用</p>
+            <label
+              >收到的 API Key<input
+                id="issuedKey"
+                value="this-is-a-key"
+                readonly
+                autocomplete="off"
+                spellcheck="false" /></label
+            ><button id="copyKey" class="secondary" type="button">
+              复制教学密钥
+            </button>
+            <button id="revokeKey" class="text-button" type="button">
+              模拟撤销密钥
+            </button>
+            <p class="fineprint">
+              这是无效教学占位符，不是真实密钥；不会产生权限或费用。真实服务商创建的密钥可能只展示一次，请按其提示安全保存。
+            </p>
+          </div>
+          <p id="keyIssueStatus" role="status">
+            尚未创建密钥。请先点击上方按钮。
           </p>
         </div>
-        <div class="worked-line">
-          <span>请求头</span>
-          <pre>
-Authorization: Bearer this-is-a-key
-Content-Type: application/json</pre>
-          <p>
-            第一行携带用于身份验证的 API Key；第二行告诉服务：正文使用 JSON
-            格式。下一步先讲密钥，JSON 的写法稍后再学。
-          </p>
-        </div>
-        <div class="worked-line">
-          <span>正文（先用中文理解）</span>
-          <p>
-            请使用 demo-small
-            模型，以一位耐心老师的方式，回答：“用一句话解释彩虹。”
-          </p>
-        </div>
-        <div class="remember">
-          <b>本步记住</b>
-          <p>
-            正文只有“具体任务”，它不能代替整条请求。发送时，地址、方法和请求头也需要准备好。
-          </p>
-        </div>
-        <p class="fineprint">
-          本课的域名、模型名和 this-is-a-key
-          均为教学占位符，不能用于真实调用。所有发送均在本页模拟。
+        <h3>为什么需要保密？</h3>
+        <p>
+          持有真实密钥的人可能使用它的权限和额度。只把密钥交给可信应用，并确认应用如何保存配置、是否会经过它的服务器。不要把密钥发进聊天内容、截图或公开仓库。
         </p>
+        <p>
+          如果泄露，到官方控制台撤销并更换密钥；只删除公开文字不能让旧密钥失效。不同服务商的密钥通常不能互换，<strong>地址与密钥要来自你准备连接的同一家服务</strong>。
+        </p>
+        <div class="remember">
+          <b>应用里的 Key 输入框，通常只填密钥本身</b>
+          <p>
+            本课填 <code>this-is-a-key</code>，不用自己加 <code>Bearer</code> 或
+            <code>Authorization:</code>。请求头通常由应用生成，稍后会演示。
+          </p>
+        </div>
         <p class="transition">
-          下一步，看看服务是怎样通过 API Key 识别调用身份的。
+          密钥领到了。下一步，看看 API 地址应该复制哪一段。
         </p>
       </section>
       <section
@@ -248,73 +282,113 @@ Content-Type: application/json</pre>
         hidden
       >
         <div class="chapter-number">第 3 步 / 共 9 步</div>
-        <h2 id="heading-2" tabindex="-1">API Key：请求中的一把“通行钥匙”</h2>
+        <h2 id="heading-2" tabindex="-1">
+          Base URL 和完整 Endpoint，不一定填同一个值
+        </h2>
         <div class="explain-box">
-          <strong>这一小步：知道密钥的作用，以及应该放在哪里。</strong>
+          <strong>这一小步：按应用的地址规则填写，不是见到链接就粘贴。</strong>
           <p>
-            有了服务地址，为什么不能随便调用？因为服务还需要确认：<strong
-              >这次调用使用谁的权限和额度？</strong
-            >
-          </p>
-          <p>
-            API Key（API
-            密钥）是一段由服务商签发的秘密凭证。可以把它想成一把通行钥匙：请求带上它，服务验证后，就能把这次调用关联到相应项目或账户。
+            服务商给的<strong>完整 Endpoint</strong
+            >是最终请求的目标；应用设置里的
+            <strong>Base URL</strong>
+            通常只是基础地址，应用还会自动补上一段路径。登录页、官网首页和控制台网址不能代替
+            API 地址。
           </p>
         </div>
-        <h3>① 看看它在请求里的位置</h3>
-        <pre class="light-code">Authorization: Bearer this-is-a-key</pre>
-        <ol class="instructions">
-          <li>
-            <code>Authorization</code> 是请求头名称，表示这里携带认证信息。
-          </li>
-          <li><code>Bearer</code> 是本例使用的认证方式，后面留一个空格。</li>
-          <li>
-            <code>this-is-a-key</code>
-            是本课的<strong>教学占位符，不是真实密钥</strong>。真实调用时才在可信工具中替换成服务商签发的密钥。
-          </li>
-        </ol>
+        <h3>① 先对照服务商的信息</h3>
+        <pre class="light-code">
+API 基础地址：https://api.example.com/v1
+完整聊天接口：https://api.example.com/v1/chat/completions</pre>
+        <h3>② 再看应用会补什么</h3>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>应用说明</th>
+                <th>此例应该填</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>自动补 <code>/chat/completions</code></td>
+                <td><code>https://api.example.com/v1</code></td>
+              </tr>
+              <tr>
+                <td>自动补 <code>/v1/chat/completions</code></td>
+                <td><code>https://api.example.com</code></td>
+              </tr>
+              <tr>
+                <td>要求完整 Endpoint，不再补路径</td>
+                <td>
+                  <code>https://api.example.com/v1/chat/completions</code>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <p>
-          密钥不是提问内容，也不是模型名，<strong
-            >不用放进 messages 或 content</strong
-          >。其他服务可能要求使用
-          <code>x-api-key</code> 等请求头，具体按接口文档填写。
+          <strong>不是所有应用都一样。</strong
+          >内置服务商常常已填好地址；自定义服务需要核对接口类型、应用版本和字段说明。不要凭经验一律添加或删除
+          <code>/v1</code>。
         </p>
-        <h3>② 它和聊天应用的账号密码有什么区别？</h3>
-        <p>
-          账号密码通常用于你登录网站；API Key 通常用于程序调用接口。<strong
-            >不要把登录密码当作 API Key 填进去。</strong
-          >聊天会员也不一定自带可用 API 额度。
-        </p>
-        <h3>③ 真正使用时，照这个顺序做</h3>
-        <ol class="instructions">
-          <li>
-            到服务商的官方控制台创建密钥，按需要限制权限、设置可用的额度或预算控制。
-          </li>
-          <li>只在可信的工具中使用它；自己的应用通过服务端保存并使用密钥。</li>
-          <li>不把真实密钥发给别人，也不放进公开网页、截图或 GitHub 仓库。</li>
-          <li>
-            如果泄露，到控制台<strong>撤销旧密钥并生成新密钥</strong>；仅删除公开文字不能让旧密钥失效。
-          </li>
-        </ol>
-        <div class="quick-check">
-          <span class="small-label">小检查 · 选一项</span>
-          <h3>调用要用到 API Key，应该把它放在哪里？</h3>
+        <h3>③ 试着判断：这个应用应该填哪一个？</h3>
+        <div class="address-lab">
+          <label
+            >模拟应用的地址规则<select id="addressRule">
+              <option value="base">应用 A：自动补 /chat/completions</option>
+              <option value="host">应用 B：自动补 /v1/chat/completions</option>
+              <option value="endpoint">
+                应用 C：不补路径，使用完整 Endpoint
+              </option>
+            </select></label
+          >
           <div class="quiz-options">
-            <button data-key-answer="wrong">提问 content 里</button
-            ><button data-key-answer="right">文档指定的认证请求头里</button
-            ><button data-key-answer="wrong">模型名称 model 里</button>
+            <button
+              class="address-choice"
+              data-address-choice="https://api.example.com"
+            >
+              https://api.example.com</button
+            ><button
+              class="address-choice"
+              data-address-choice="https://api.example.com/v1"
+            >
+              https://api.example.com/v1</button
+            ><button
+              class="address-choice"
+              data-address-choice="https://api.example.com/v1/chat/completions"
+            >
+              https://api.example.com/v1/chat/completions
+            </button>
           </div>
-          <p id="keyFeedback" role="status"></p>
+          <p id="addressFeedback" role="status">
+            应用 A 会补 /chat/completions。先选一个地址，看看拼接结果。
+          </p>
+          <p class="small-label">应用最终会请求：</p>
+          <code id="addressResult">等待选择地址</code>
         </div>
         <div class="remember">
-          <b>本步记住</b>
+          <b>本课下一步使用应用 A 的规则</b>
           <p>
-            知道密钥的人可能使用它的权限和额度，所以它必须保密。本课已经填好假的
-            this-is-a-key，你不需要申请或输入真实密钥。
+            <code>https://api.example.com/v1</code> +
+            <code>/chat/completions</code><br />＝
+            <code>https://api.example.com/v1/chat/completions</code>
           </p>
         </div>
+        <p class="fineprint">
+          具体应用的字段名称和拼接规则请查官方文档。例：<a
+            href="https://www.cherryai.com.cn/docs/zh-cn/pre-basic/settings/providers/"
+            target="_blank"
+            rel="noreferrer"
+            >Cherry Studio 桌面版地址说明</a
+          >、<a
+            href="https://cherryai.com.cn/docs/zh-cn/mobile/providers-and-models/"
+            target="_blank"
+            rel="noreferrer"
+            >移动版 Base URL 说明</a
+          >。本课的 A / B / C 均为教学模型，不是某款软件的截图。
+        </p>
         <p class="transition">
-          准备工作看懂了。下一步，只填三个简单空位，试着提交一次请求。
+          现在，把领到的密钥和正确的基础地址，一起填到模拟聊天应用。
         </p>
       </section>
       <section
@@ -325,151 +399,140 @@ Content-Type: application/json</pre>
         hidden
       >
         <div class="chapter-number">第 4 步 / 共 9 步</div>
-        <h2 id="heading-3" tabindex="-1">先看示范，再填写三个空位</h2>
+        <h2 id="heading-3" tabindex="-1">
+          练习一：像配置第三方应用一样，连接模型
+        </h2>
         <div class="explain-box">
-          <strong>这一小步：分清“选哪个模型、谁在说话、说了什么”。</strong>
-          <p>地址、请求头和模型都已经准备好。下面只需要认识正文里的三个词。</p>
-        </div>
-        <div class="table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>字段</th>
-                <th>意思</th>
-                <th>填什么</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><code>model</code></td>
-                <td>选哪个模型</td>
-                <td><code>demo-small</code>（本课已填好）</td>
-              </tr>
-              <tr>
-                <td><code>role</code></td>
-                <td>这条消息是谁说的</td>
-                <td>
-                  <code>user</code> 表示用户，<code>assistant</code> 表示模型
-                </td>
-              </tr>
-              <tr>
-                <td><code>content</code></td>
-                <td>具体说了什么</td>
-                <td>用户提问，例如“用一句话解释彩虹。”</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <h3>① 先读一条已经写好的消息</h3>
-        <div class="example-message">
-          <b>用户说：</b>用一句话解释彩虹。
+          <strong>主线练习：填地址、填密钥、选模型。</strong>
           <p>
-            因此，<code>role = user</code>，<code
-              >content = 用一句话解释彩虹。</code
+            真实应用中，通常先在“设置 → 服务商 /
+            模型”里选内置服务，或添加自定义服务。<strong>接口类型必须与服务商支持的格式一致</strong>；它不是模型名。内置服务的默认地址正确时可以保留。
+          </p>
+          <p>
+            下面已替你选好教学服务和接口类型。只补三个空位，再点击检测连接。这里不会发送真实网络请求。
+          </p>
+        </div>
+        <div class="provider-facts">
+          <strong>从刚才的服务商控制台抄到这里</strong>
+          <p>
+            基础地址：<code>https://api.example.com/v1</code
+            ><br />密钥：在上一步模拟创建并领取<br />模型 ID：<code
+              >demo-small</code
             >
           </p>
         </div>
-        <p>
-          还有一种角色
-          <code>system</code
-          >，用来设定模型的整体行为。例如“你是一位耐心的老师。”。这条消息也已经替你填好。
-        </p>
-        <h3>② 照着下面的顺序填表</h3>
-        <ol class="instructions">
-          <li>
-            我们要<strong>提交</strong>消息，所以请求方法选择
-            <code>POST</code>。
-          </li>
-          <li>
-            这句话是<strong>用户的提问</strong>，所以角色选择
-            <code>user</code>。
-          </li>
-          <li>
-            把“<strong>用一句话解释彩虹。</strong>”填入提问内容，然后检查。
-          </li>
-        </ol>
         <div class="exercise" id="panel-ui">
           <div class="task">
-            <span class="task-icon">↗</span>
+            <span class="task-icon">⚙</span>
             <div>
-              <strong>任务一 · 请模型解释彩虹</strong>
-              <p>
-                提交一条消息，提问内容为“用一句话解释彩虹。”。填好三处空位，再检查并模拟发送。
-              </p>
+              <strong>示例聊天应用 · 模型服务设置</strong>
+              <p>应用 A：在基础地址后自动补 /chat/completions。</p>
             </div>
           </div>
-          <div class="workbench">
-            <form id="requestForm">
-              <div class="field-row">
-                <label
-                  >① 请求方法 <span class="fill-tag">你来选</span
-                  ><select id="method">
-                    <option value="">选择方法</option>
-                    <option>GET</option>
-                    <option>POST</option>
-                  </select></label
-                ><label
-                  >模型 <span class="fixed-tag">已填好</span
-                  ><input value="demo-small" readonly
-                /></label>
-              </div>
-              <label
-                >请求地址 <span class="fixed-tag">已填好</span
-                ><input
-                  value="https://api.example.com/v1/chat/completions"
-                  readonly
-              /></label>
-              <div class="preset">
-                <code
-                  >Authorization: Bearer this-is-a-key<br />Content-Type:
-                  application/json</code
-                ><span>请求头已准备好</span>
-              </div>
-              <label
-                >② 消息角色 <span class="fill-tag">你来选</span
-                ><select id="role">
-                  <option value="">谁在说这句话？</option>
-                  <option value="system">system · 整体行为指令</option>
-                  <option value="user">user · 用户提问</option>
-                  <option value="assistant">assistant · 模型回复</option>
-                </select></label
-              ><label
-                >③ 提问内容 <span class="fill-tag">你来填</span
-                ><textarea
-                  id="prompt"
-                  rows="2"
-                  placeholder="把任务里的提问写在这里"
-                ></textarea></label
-              ><button class="primary" type="submit">
-                检查并模拟发送 <span>→</span>
-              </button>
-            </form>
-            <details class="preview-side">
-              <summary>可选对照：表单生成的请求</summary>
-              <div class="preview-label">
-                <span>实时请求预览</span><span>随填写更新</span>
-              </div>
-              <pre id="livePreview"></pre>
-              <div class="response-placeholder" id="uiResponse">
-                ↙ 填好表单，看看模型会收到什么。
-              </div>
-            </details>
+          <form id="requestForm" autocomplete="off">
+            <label
+              >服务名称 / 接口类型<span class="fixed-tag">已选好</span
+              ><input value="示例服务 · 聊天消息兼容接口" readonly
+            /></label>
+            <p class="field-help">
+              真实应用中可能看到“OpenAI
+              兼容”“Anthropic”“Gemini”等接口选项，应按服务商文档选择，不能只看模型名称。
+            </p>
+            <label
+              >① API 地址 / Base URL<span class="fill-tag">你来填</span
+              ><input
+                id="baseUrl"
+                type="text"
+                inputmode="url"
+                placeholder="填写基础地址，注意 /v1"
+                spellcheck="false"
+                autocapitalize="off"
+                autocomplete="off"
+            /></label>
+            <p class="field-help">
+              本应用会自动补 /chat/completions，不要把完整接口路径重复填进来。
+            </p>
+            <label
+              >② API Key<span class="fill-tag">你来填</span
+              ><input
+                id="apiKey"
+                type="password"
+                placeholder="填写你领到的教学密钥"
+                autocomplete="off"
+                spellcheck="false" /></label
+            ><button
+              id="toggleKey"
+              class="text-button"
+              type="button"
+              aria-pressed="false"
+            >
+              显示教学密钥
+            </button>
+            <button class="text-button" type="button" data-go="1">
+              返回控制台领取密钥</button
+            ><label
+              >③ 模型 / Model ID<span class="fill-tag">你来选</span
+              ><select id="connectionModel">
+                <option value="">选择服务商提供的模型</option>
+                <option value="demo-small">demo-small</option>
+                <option value="another-model">
+                  another-model（其他服务的示例名称）
+                </option>
+              </select></label
+            >
+            <p class="field-help">
+              真实应用可能先点“获取模型列表”，再添加并启用模型；没有列表时，按服务商文档填写精确的模型
+              ID。
+            </p>
+            <div class="preset">已准备好的测试消息：用一句话解释彩虹。</div>
+            <button type="submit" class="primary">检测连接并模拟对话 →</button>
+          </form>
+          <div
+            id="scenario-ui"
+            class="scenario-window"
+            aria-label="请求对应的模拟聊天窗口"
+          >
+            <div class="scenario-header">
+              <span class="window-dots" aria-hidden="true">● ● ●</span
+              ><strong>聊天窗口</strong
+              ><span class="simulation-tag">本地模拟 · 预设回答</span>
+            </div>
+            <div class="scenario-status" id="scenario-status-ui" role="status">
+              等待你完成请求设置。
+            </div>
+            <div class="chat-messages" id="chat-messages-ui">
+              <p class="chat-empty">发送后，你的消息和模型回复会出现在这里。</p>
+            </div>
+            <div class="stream-note">
+              模拟流式效果用于展示分段接收回答，不会调用真实模型。
+            </div>
           </div>
-          <div id="feedback-ui" class="feedback" role="status"></div>
+          <div class="response-placeholder" id="uiResponse">
+            填好连接信息后，这里会出现模拟回答。
+          </div>
+          <details class="preview-side">
+            <summary>可选：看看应用会替你发出什么</summary>
+            <pre id="livePreview"></pre>
+          </details>
+          <div class="feedback" id="feedback-ui" role="status"></div>
           <div class="exercise-bottom">
-            <button class="text-button" data-hint="ui">需要一点提示？</button
-            ><button class="text-button" data-reset="ui">重置本题 ↺</button>
+            <button class="text-button" data-hint="ui">填写提示</button
+            ><button class="text-button" data-reset="ui">重置连接设置 ↺</button>
           </div>
         </div>
         <div class="remember">
-          <b>做完后核对</b>
+          <b>到这里，你已经练过第三方应用的核心设置</b>
           <p>
-            你填入的是用户的提问，模型返回的回答会显示为
-            <code>assistant</code> 消息。两者方向不同。
+            平时只要在应用里选中刚添加的模型，就可以聊天。保存连接不等于迁移了旧记录；也不用在每次提问里重填密钥。
           </p>
         </div>
+        <p>
+          <button class="secondary" data-go="8">
+            先看真实应用的迁移清单 →
+          </button>
+        </p>
         <p class="transition">
-          我们已经会填表了。下一步，把相同内容换一种写法。
+          也可以继续下一步：拆开应用自动生成的请求，理解地址、密钥和提问分别去了哪里。
         </p>
       </section>
       <section
@@ -480,7 +543,56 @@ Content-Type: application/json</pre>
         hidden
       >
         <div class="chapter-number">第 5 步 / 共 9 步</div>
-        <h2 id="heading-4" tabindex="-1">JSON：把表单内容写成有结构的文本</h2>
+        <h2 id="heading-4" tabindex="-1">填完设置后，应用怎样组成一条请求？</h2>
+        <div class="explain-box">
+          <strong>理解原理：你填的是设置，应用发的是请求。</strong>
+          <p>
+            Base URL 负责拼出目标地址；API Key
+            变成认证请求头；你选的模型和聊天内容进入 JSON 正文。<strong
+              >三者各在各的位置。</strong
+            >
+          </p>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>请求组成</th>
+                <th>应用从哪里取得</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>方法 <code>POST</code></td>
+                <td>聊天接口的约定，通常由应用处理</td>
+              </tr>
+              <tr>
+                <td>完整 Endpoint</td>
+                <td>你填的 Base URL ＋ 应用自动补的路径</td>
+              </tr>
+              <tr>
+                <td>认证请求头</td>
+                <td>你填的 API Key，通常由应用加上 Bearer 等格式</td>
+              </tr>
+              <tr>
+                <td>JSON 正文</td>
+                <td>模型 ID ＋ 消息和对话历史</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <pre class="light-code">
+POST https://api.example.com/v1/chat/completions
+Authorization: Bearer this-is-a-key
+Content-Type: application/json
+
+{ "model": "demo-small", "messages": [ ... ] }</pre>
+        <p>
+          <code>Authorization</code> 这一行属于请求头，不属于下面的 JSON。<code
+            >Bearer</code
+          >
+          是本例使用的认证方式；其他接口可能使用不同的请求头。
+        </p>
         <div class="explain-box">
           <strong>这一小步：学会读 JSON，不用背语法。</strong>
           <p>
@@ -547,34 +659,26 @@ Content-Type: application/json</pre>
         <div class="chapter-number">第 6 步 / 共 9 步</div>
         <h2 id="heading-5" tabindex="-1">练习二：把三张卡片放回 JSON</h2>
         <div class="explain-box">
-          <strong>这一小步：对照含义，找到字段和值的位置。</strong>
+          <strong>拓展练习：认证请求头与 JSON 正文一起拼。</strong>
           <p>
-            目标和刚才一样：用
-            <code>demo-small</code>
-            模型提问“用一句话解释彩虹。”。括号、标点和其他字段都已经写好。
+            正文仍然提问“用一句话解释彩虹。”。这次三个空位分别是：教学密钥、选择模型的字段名、提问内容。
           </p>
         </div>
         <ol class="instructions">
+          <li>请求头的空位①：放入控制台领到的密钥。Bearer 已替你写好。</li>
           <li>
-            空位①后面是模型名称，所以前面需要<strong>选择模型的字段名</strong>。
+            正文的空位②：后面是 demo-small，因此需要放入选择模型的字段名。
           </li>
-          <li>
-            空位②在
-            <code>role</code> 后面，想一想：这句话是<strong>谁在提问</strong>？
-          </li>
-          <li>
-            空位③在
-            <code>content</code> 后面，需要放入<strong>具体提问</strong>。
-          </li>
+          <li>正文的空位③：放入“用一句话解释彩虹。”这条提问。</li>
         </ol>
         <div class="exercise" id="panel-drag">
           <div class="task">
             <span class="task-icon">{ }</span>
             <div>
-              <strong>任务二 · 把同一条请求拼成 JSON</strong>
+              <strong>任务二 · 拼好认证请求头与 JSON 正文</strong>
               <p>
-                把三张合适的卡片放进空位。目标仍是用 demo-small
-                提问“用一句话解释彩虹。”。
+                把密钥放进请求头，把模型与提问放进 JSON
+                正文。三处空位，其余已写好。
               </p>
             </div>
           </div>
@@ -589,40 +693,68 @@ Content-Type: application/json</pre>
           ></div>
           <div class="drag-code">
             <div class="code-title">
-              <span>请求正文 · 请补三处</span><span>JSON</span>
+              <span>完整请求的相关部分 · 三处空位</span><span>HTTP + JSON</span>
             </div>
             <div class="json-lines">
-              {<br />&nbsp;
+              POST https://api.example.com/v1/chat/completions<br />Authorization:
+              Bearer
+              <button
+                class="drop"
+                data-slot="auth"
+                aria-label="空位一：API Key"
+              >
+                ① 密钥</button
+              ><br />Content-Type: application/json<br /><span
+                class="request-separator"
+                >↓ 以下是 JSON 正文，密钥不放在这里</span
+              ><br />{<br />&#160;
               <button
                 class="drop"
                 data-slot="key"
-                aria-label="空位一：选择模型的字段名"
+                aria-label="空位二：模型字段名"
               >
-                ① 字段名</button
-              >: "demo-small",<br />&nbsp; "messages": [<br />&nbsp; &nbsp; {
-              "role": "system", "content": "你是一位耐心的老师。" },<br />&nbsp;
-              &nbsp; { "role":
-              <button
-                class="drop"
-                data-slot="role"
-                aria-label="空位二：提问者的角色"
-              >
-                ② 角色</button
-              >,<br />&nbsp; &nbsp; &nbsp; "content":
+                ② 字段名</button
+              >: "demo-small",<br />&#160; "messages": [<br />&#160; &#160; {
+              "role": "system", "content": "你是一位耐心的老师。" },<br />&#160;
+              &#160; { "role": "user", "content":
               <button
                 class="drop"
                 data-slot="content"
-                aria-label="空位三：用户的提问"
+                aria-label="空位三：用户提问"
               >
                 ③ 提问内容
               </button>
-              }<br />&nbsp; ]<br />}
+              }<br />&#160; ]<br />}
             </div>
           </div>
           <div class="below-code">
             <small
-              >卡片自带双引号。这里只拼正文，方法、地址和请求头沿用第一关。</small
+              >密钥卡片不带引号；JSON 的字段名和文字值卡片自带双引号。</small
             ><button class="primary" id="checkDrag">检查这条 JSON →</button>
+          </div>
+          <div
+            id="scenario-drag"
+            class="scenario-window"
+            aria-label="请求对应的模拟聊天窗口"
+          >
+            <div class="scenario-header">
+              <span class="window-dots" aria-hidden="true">● ● ●</span
+              ><strong>聊天窗口</strong
+              ><span class="simulation-tag">本地模拟 · 预设回答</span>
+            </div>
+            <div
+              class="scenario-status"
+              id="scenario-status-drag"
+              role="status"
+            >
+              等待你完成请求设置。
+            </div>
+            <div class="chat-messages" id="chat-messages-drag">
+              <p class="chat-empty">发送后，你的消息和模型回复会出现在这里。</p>
+            </div>
+            <div class="stream-note">
+              模拟流式效果用于展示分段接收回答，不会调用真实模型。
+            </div>
           </div>
           <div class="response-placeholder" id="dragResponse" hidden></div>
           <div id="feedback-drag" class="feedback" role="status"></div>
@@ -634,9 +766,9 @@ Content-Type: application/json</pre>
         <div class="remember">
           <b>做完后核对</b>
           <p>
-            <code>model</code> 是字段名，<code>"demo-small"</code>
-            是它的值；<code>role</code> 是字段名，<code>"user"</code>
-            是它的值。字段名与值各有位置。
+            没有密钥，即使 JSON
+            完全正确也可能无法通过身份验证。密钥放在请求头；model 与 messages
+            放在正文。
           </p>
         </div>
         <p class="transition">
@@ -653,25 +785,16 @@ Content-Type: application/json</pre>
         <div class="chapter-number">第 7 步 / 共 9 步</div>
         <h2 id="heading-6" tabindex="-1">练习三：亲手修改三个值</h2>
         <div class="explain-box">
-          <strong>这一小步：在完整骨架里补全三个值。</strong>
+          <strong>拓展练习：带上密钥，再修改 JSON 中的两个值。</strong>
           <p>
-            直接把编辑框里的三个
-            <code>__填写__</code> 替换掉即可。所有字段名、括号和 system
-            消息都保留原样。
+            三处要填：上方的 API Key、JSON 中的模型名和提问内容。角色
+            user、括号和其他字段都已写好。
           </p>
         </div>
         <ol class="instructions">
-          <li>
-            <code>model</code> 后面的占位符：填入 <code>demo-small</code>。
-          </li>
-          <li>
-            第二条消息的 <code>role</code>：这是用户提问，填入
-            <code>user</code>。
-          </li>
-          <li>
-            第二条消息的 <code>content</code>：填入
-            <strong>用一句话解释月食。</strong>
-          </li>
+          <li>先在请求头区域填入领到的教学密钥。</li>
+          <li>JSON 的 model 后面填入 demo-small。</li>
+          <li>content 后面填入“用一句话解释月食。”，保留英文双引号。</li>
         </ol>
         <div class="example-message">
           <b>修改示范</b>
@@ -687,11 +810,28 @@ Content-Type: application/json</pre>
             <div>
               <strong>任务三 · 亲手补全 JSON</strong>
               <p>
-                把提问换成“用一句话解释月食。”。只需替换三个
-                <code>__填写__</code
-                >：模型名称、用户角色和提问内容。其余字段已填好。
+                用同一把教学密钥认证，把正文里的两个 __填写__
+                换成模型名和新提问。
               </p>
             </div>
+          </div>
+          <div class="transport-editor">
+            <code>POST https://api.example.com/v1/chat/completions</code
+            ><label
+              >认证请求头的 API Key<input
+                id="writeKey"
+                type="text"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="填领到的教学密钥，应用会加上 Bearer" /></label
+            ><code id="writeHeaderPreview"
+              >Authorization: Bearer __填写密钥__</code
+            >
+            <p class="field-help">
+              Content-Type: application/json 已填好。下面的编辑器只写 JSON
+              正文。
+            </p>
+            <button class="text-button" data-go="1">返回控制台查看密钥</button>
           </div>
           <div class="editor-heading">
             <span>请求正文</span
@@ -708,8 +848,33 @@ Content-Type: application/json</pre>
           ></textarea>
           <div class="below-code">
             <small
-              >提示：字符串用英文双引号，属性之间用英文逗号；最后一项后面不加逗号。</small
+              >先检查认证请求头，再检查 JSON 的双引号、逗号与括号。密钥不写进
+              JSON。</small
             ><button id="checkWrite" class="primary">检查并模拟发送 →</button>
+          </div>
+          <div
+            id="scenario-write"
+            class="scenario-window"
+            aria-label="请求对应的模拟聊天窗口"
+          >
+            <div class="scenario-header">
+              <span class="window-dots" aria-hidden="true">● ● ●</span
+              ><strong>聊天窗口</strong
+              ><span class="simulation-tag">本地模拟 · 预设回答</span>
+            </div>
+            <div
+              class="scenario-status"
+              id="scenario-status-write"
+              role="status"
+            >
+              等待你完成请求设置。
+            </div>
+            <div class="chat-messages" id="chat-messages-write">
+              <p class="chat-empty">发送后，你的消息和模型回复会出现在这里。</p>
+            </div>
+            <div class="stream-note">
+              模拟流式效果用于展示分段接收回答，不会调用真实模型。
+            </div>
           </div>
           <div id="writeResponse" class="response-placeholder" hidden></div>
           <div id="feedback-write" class="feedback" role="status"></div>
@@ -739,7 +904,52 @@ Content-Type: application/json</pre>
         hidden
       >
         <div class="chapter-number">第 8 步 / 共 9 步</div>
-        <h2 id="heading-7" tabindex="-1">请求发出后，在哪里看模型的回答？</h2>
+        <h2 id="heading-7" tabindex="-1">配置后没有回答，应该先检查哪里？</h2>
+        <div class="explain-box">
+          <strong
+            >回到第三方应用：按“服务类型 → 地址 → 密钥 → 模型”检查。</strong
+          >
+          <p>
+            检测成功后，要确认服务商和模型已启用，再在聊天页选中它。模型列表为空时，可尝试同步列表或按文档添加
+            ID；不同应用的操作位置会不同。
+          </p>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>现象</th>
+                <th>优先检查</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>404 / 路径不存在</td>
+                <td>
+                  是否把完整 Endpoint 当成 Base URL，导致重复 /v1 或
+                  /chat/completions
+                </td>
+              </tr>
+              <tr>
+                <td>401 / 认证失败</td>
+                <td>
+                  Key 是否复制完整、是否已撤销；地址与 Key 是否属于同一服务；Key
+                  输入框是否误加 Bearer
+                </td>
+              </tr>
+              <tr>
+                <td>模型不可用 / 403 / 404</td>
+                <td>模型 ID、接口类型和账号权限，结合具体错误信息判断</td>
+              </tr>
+              <tr>
+                <td>超时 / 网络错误</td>
+                <td>
+                  设备是否能连接 API 地址，代理设置与服务状态；不一定是密钥错误
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <div class="explain-box">
           <strong>这一小步：分清请求和响应。</strong>
           <p>
@@ -821,84 +1031,102 @@ Content-Type: application/json</pre>
         hidden
       >
         <div class="chapter-number">第 9 步 / 共 9 步</div>
-        <h2 id="heading-8" tabindex="-1">把学过的步骤，用在真实调用中</h2>
+        <h2 id="heading-8" tabindex="-1">把同一套步骤，用到你选的第三方应用</h2>
         <div class="explain-box">
-          <strong>这一小步：知道下一次应该按什么顺序做。</strong>
+          <strong>迁移清单：目标是成功聊一句，不要求自己写请求。</strong>
           <p>
-            你已经体验了“填表单 → 拼 JSON → 修改 JSON →
-            读响应”。真实调用时，仍然可以照着这个顺序来。
+            回到真实应用，把下面五步走完。刚才的练习只使用了假地址、假模型和
+            <code>this-is-a-key</code>，它们不能用于真实服务。
           </p>
         </div>
-        <h3>① 从官方文档拿到信息</h3>
-        <p>
-          找到完整地址、方法、认证方式、可用模型名和请求示例。把
-          <code>api.example.com</code>、<code>demo-small</code> 和
-          <code>this-is-a-key</code> 换成真实信息。<strong
-            >本课的占位符不能直接调用。</strong
-          >
-        </p>
-        <h3>② 在可信的 API 工具里填好请求</h3>
-        <p>
-          先沿用服务商的完整示例，只改模型和提问。依次填好地址、方法、认证请求头和
-          JSON 正文，确认成功后再调整其他参数。密钥只在可信工具或服务端使用。
-        </p>
-        <h3>③ 读响应，同时留意用量</h3>
-        <p>
-          真实响应可能包含用量信息。Token
-          是文本的分块单位，不等于字数；输入和输出常影响费用。API
-          的额度、计费与聊天客户端会员通常分开管理，以服务商说明为准。
-        </p>
-        <h3>④ 继续对话时，带上需要的历史</h3>
-        <p>
-          例如在下次请求的消息列表里，按顺序放入之前的用户提问、模型回复和新问题。API
-          不会自动继承你在聊天应用里的对话，具体如何携带历史要遵循接口约定。
-        </p>
+        <ol class="instructions">
+          <li>
+            <strong>在官方平台准备信息。</strong>找到 API
+            文档和控制台，确认支持的接口格式、地址、模型
+            ID、额度与费用；创建真实密钥并安全保存。
+          </li>
+          <li>
+            <strong>打开应用的服务商设置。</strong
+            >优先选择对应的内置服务；需要自定义时，按文档选择正确的接口类型。模型同名不代表接口格式或
+            Key 通用。
+          </li>
+          <li>
+            <strong>填写地址和密钥。</strong>核对这个版本的应用如何补路径。Key
+            字段通常只粘贴密钥本身，避免引号、额外空格或 Bearer
+            前缀；例外以应用文档为准。
+          </li>
+          <li>
+            <strong>添加并启用模型。</strong>获取模型列表或填写精确
+            ID，保存并启用该服务，再运行连接测试。
+          </li>
+          <li>
+            <strong>回到聊天页选择模型，发一句简单问题。</strong
+            >有了回复后再处理历史记录导入、提示词和其他偏好；这些属于应用功能，不会仅因填了
+            Key 而自动迁移。
+          </li>
+        </ol>
         <div class="remember">
-          <b>把整条过程再读一遍</b>
+          <b>你填写配置，应用组装请求</b>
           <p>
-            找到地址 → 选择方法 → 用请求头带上身份 → 填好模型与消息 → 发送 →
-            从响应里取出回答。
+            地址决定发给谁；密钥提供调用身份；模型 ID
+            选择模型。应用把你的提问写进正文，发送请求，再把响应显示成聊天消息。
           </p>
         </div>
-        <div id="completion" class="completion" hidden>
-          <strong>三项练习均已完成。</strong>
-          <p>你已经亲手构造过同一种请求的三种写法。</p>
-        </div>
-        <div class="review-status" id="reviewStatus"></div>
         <p>
-          <button class="secondary" data-go="3">回到表单练习</button>
-          <button class="secondary" data-go="4">再看一遍 JSON 讲解</button>
+          API 额度、计费与官方聊天会员通常分开。Key
+          要交给可信应用；不要放进公开网页、仓库或求助截图。泄露后去服务商控制台撤销并更换。
+        </p>
+        <div id="completion" class="completion" hidden>
+          <strong>连接练习与两项拓展均已完成。</strong>
+          <p>
+            你已经把同一把教学密钥用于应用配置、请求头卡片与 JSON 请求练习。
+          </p>
+        </div>
+        <div id="reviewStatus" class="review-status"></div>
+        <p>
+          <button class="secondary" data-go="3">再练一次应用连接</button>
+          <button class="secondary" data-go="4">理解背后的请求</button>
         </p>
         <details>
-          <summary>延伸阅读与教学参考</summary>
+          <summary>按你使用的应用核对文档</summary>
           <p>
             <a
-              href="https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Guides/Overview"
+              href="https://www.cherryai.com.cn/docs/zh-cn/pre-basic/settings/providers/"
               target="_blank"
               rel="noreferrer"
-              >MDN：HTTP 概述</a
+              >Cherry Studio 桌面版 · 服务商设置</a
             ><br /><a
-              href="https://developers.openai.com/api/reference/resources/chat"
+              href="https://cherryai.com.cn/docs/zh-cn/mobile/providers-and-models/"
               target="_blank"
               rel="noreferrer"
-              >聊天接口格式示例文档</a
+              >Cherry Studio 移动版 · 地址、密钥与模型</a
+            ><br /><a
+              href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Authorization"
+              target="_blank"
+              rel="noreferrer"
+              >MDN · Authorization 请求头</a
             ><br /><a
               href="https://louisyang841.github.io/na2o2-chemistry/peiping.html"
               target="_blank"
               rel="noreferrer"
-              >教学交互参考：化学方程式配平</a
+              >教学交互参考</a
             >
+          </p>
+          <p>
+            文档例子用于说明不同应用和版本的差异，不要求你使用某一款客户端。
           </p>
         </details>
       </section>
       <div class="page-controls">
         <button id="prevStep" class="secondary" disabled>← 上一步</button>
         <div>
-          <span id="nextDescription">接下来：拆开一次请求</span
-          ><button id="nextStep" class="primary">下一步：认识请求 →</button>
+          <span id="nextDescription">接下来：模拟申请 API Key</span
+          ><button id="nextStep" class="primary">下一步：领取教学密钥 →</button>
         </div>
       </div>
-      <p class="book-footer">教学用模拟环境 · 无需密钥 · 按自己的节奏学习</p>
+      <p class="book-footer">
+        纯本地模拟 · 不要输入真实密钥 · 应用与服务商均为教学示例
+      </p>
     </main>
     <script src="lesson.js"></script>
     <script src="app.js"></script>

@@ -1,6 +1,17 @@
 const assert=require('node:assert/strict');const fs=require('node:fs');const L=require('./dist/lesson.js');
-assert.deepEqual(L.validateUI({method:'POST',role:'user',prompt:L.prompts.ui}),[]);
-assert.equal(L.validateUI({method:'GET',role:'assistant',prompt:'答案'}).length,3);
+const connection={baseUrl:'https://api.example.com/v1',key:'this-is-a-key',model:'demo-small'};
+assert.deepEqual(L.validateConnection(connection,true),[]);
+assert(L.validateConnection(connection,false).length,'An unissued or revoked teaching key cannot authenticate');
+assert(L.validateConnection({...connection,key:''},true).length);
+assert(L.validateConnection({...connection,key:'Bearer this-is-a-key'},true).some(x=>x.includes('Bearer')));
+assert(L.validateConnection({...connection,baseUrl:'https://api.example.com/v1/chat/completions'},true).some(x=>x.includes('重复')));
+assert(L.validateConnection({...connection,baseUrl:'https://api.example.com'},true).some(x=>x.includes('/v1')));
+assert(L.validateConnection({...connection,model:'another-model'},true).length);
+assert.deepEqual(L.validateConnection({...connection,baseUrl:' https://api.example.com/v1/ '},true),[]);
+for(const [rule,entry] of Object.entries(L.endpointRules))assert.equal(L.composeEndpoint(entry.expected,rule),'https://api.example.com/v1/chat/completions');
+assert.equal(L.composeEndpoint(''), '');
+assert.deepEqual(L.validateKey('this-is-a-key',true),[]);
+assert(L.validateKey('this-is-a-key',false).length);
 assert(L.parseAndValidate('{bad').errors.length);
 assert(L.parseAndValidate('null').errors.length);
 assert(L.parseAndValidate('[]').errors.length);
@@ -21,4 +32,7 @@ assert(html.includes('Authorization: Bearer this-is-a-key'),'Use the explicit te
 assert(!html.includes('DEMO_KEY'),'Keep the teaching key consistent');
 assert(!html.includes('role="tablist"'),'Exercises should follow the lesson rather than require switching tabs');
 assert(ids.includes('prevStep')&&ids.includes('nextStep'),'Provide explicit sequential navigation');
-console.log('通过：请求语义、JSON 语法、异常结构、三关元素与静态资源检查。');
+for(const id of ['createKey','revokeKey','issuedKey','baseUrl','apiKey','connectionModel','writeKey','scenario-ui','scenario-drag','scenario-write','playDemo','stepDemo'])assert(ids.includes(id),'Missing learning interaction '+id);
+assert(html.includes('data-slot="auth"'),'The drag request includes an authentication header');
+assert(!/\b(?:fetch|XMLHttpRequest|WebSocket)\s*\(/.test(app),'All model calls remain simulated');
+console.log('通过：服务地址拼接、密钥签发与认证、连接配置、JSON 语法与语义、分步结构、模拟聊天与静态资源检查。');
