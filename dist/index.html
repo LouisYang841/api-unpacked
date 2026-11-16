@@ -214,7 +214,7 @@
             >
           </p>
           <p>
-            下面是虚构服务商的控制台，无需注册、登录或付费。点一次“创建教学密钥”，然后保留它，后面三项练习都会用到。
+            下面是虚构控制台。每点一次“创建教学密钥”就新增一把，可分别用于不同应用或练习；已有密钥保持有效，直到你单独撤销它。
           </p>
         </div>
         <div class="provider-console">
@@ -246,16 +246,26 @@
               复制教学密钥
             </button>
             <button id="revokeKey" class="text-button" type="button">
-              模拟撤销密钥
+              撤销当前查看的密钥
             </button>
             <p class="fineprint">
-              本次随机生成的 demo-key-
-              开头字符串只用于当前页面模拟，不是真实服务凭证。刷新页面后需重新生成。真实平台创建的密钥可能只展示一次，请按其说明安全保存。
+              随机生成的 demo-key-
+              开头字符串只在当前页面模拟中有效，多把密钥可以并存。刷新页面后全部失效。真实服务商可能只展示一次密钥，请按其说明安全保存。
             </p>
           </div>
           <p id="keyIssueStatus" role="status">
             尚未创建密钥。请先点击上方按钮。
           </p>
+          <div class="key-manager">
+            <p>
+              <strong>教学密钥列表</strong>
+              <span id="keyCount">0 把有效 / 共创建 0 把</span>
+            </p>
+            <ul id="keyList" class="key-list"></ul>
+            <p class="field-help">
+              可同时保留多把密钥。切换查看只改变示范值，不会使其他有效密钥失效，也不会改掉已经填入的密钥。撤销仅影响使用那把密钥的练习。
+            </p>
+          </div>
         </div>
         <h3>为什么需要保密？</h3>
         <p>

@@ -1,6 +1,9 @@
 const $ = (id) => document.getElementById(id);
 const completed = new Set();
 let activeKey = null;
+const validKeys = new Set();
+const keyRecords = [];
+const completedKeys = new Map();
 const scenarioStates = new Map();
 function feedback(id, errors, success) {
   const box = $('feedback-' + id);
@@ -20,6 +23,7 @@ function feedback(id, errors, success) {
   } else {
     box.textContent = success;
     completed.add(id);
+    completedKeys.set(id, requestKeyFor(id));
     celebrate(box);
     updateProgress();
   }
@@ -39,8 +43,8 @@ function uiBody() {
     ],
   };
 }
-function updatePreview() {
-  stopScenario('ui');
+function updatePreview(reset = true) {
+  if (reset) stopScenario('ui');
   const endpoint = Lesson.composeEndpoint($('baseUrl').value);
   const key = $('apiKey').value.trim();
   // Never echo arbitrary entered credentials into the page or logs.
@@ -48,15 +52,16 @@ function updatePreview() {
     'POST ' +
     (endpoint || '__等待填写地址__') +
     '\nAuthorization: Bearer ' +
-    (activeKey && key === activeKey
+    (validKeys.has(key)
       ? key
       : key
         ? '[已隐藏：本课只接收教学密钥]'
         : '__等待填写密钥__') +
     '\nContent-Type: application/json\n\n' +
     JSON.stringify(uiBody(), null, 2);
-  $('uiResponse').textContent =
-    '配置更新了。点击检测连接，观察地址、密钥与模型是否匹配。';
+  if (reset)
+    $('uiResponse').textContent =
+      '配置更新了。点击检测连接，观察地址、密钥与模型是否匹配。';
 }
 ['baseUrl', 'apiKey', 'connectionModel'].forEach((id) =>
   $(id).addEventListener('input', updatePreview),
@@ -70,7 +75,15 @@ $('toggleKey').addEventListener('click', () => {
 });
 $('createKey').addEventListener('click', () => {
   try {
-    activeKey = Lesson.generateTeachingKey();
+    do {
+      activeKey = Lesson.generateTeachingKey();
+    } while (keyRecords.some((record) => record.key === activeKey));
+    validKeys.add(activeKey);
+    keyRecords.push({
+      key: activeKey,
+      label: '教学密钥 ' + (keyRecords.length + 1),
+      revoked: false,
+    });
   } catch {
     $('keyIssueStatus').textContent =
       '无法生成教学密钥，请使用支持 Web Crypto 的浏览器访问此 HTTPS 页面。';
@@ -79,10 +92,10 @@ $('createKey').addEventListener('click', () => {
   $('issuedKey').value = activeKey;
   syncTeachingKey();
   $('keyReceipt').hidden = false;
-  $('createKey').disabled = true;
-  $('createKey').textContent = '教学密钥已签发';
+  $('createKey').disabled = false;
+  $('createKey').textContent = '再创建一把教学密钥';
   $('keyIssueStatus').textContent =
-    '已收到本次随机生成的教学密钥。复制它，下一步带到第三方应用设置里。此密钥只在当前页面有效，刷新后需重新生成。';
+    '已新增一把随机教学密钥。之前未撤销的密钥仍然有效；下面可切换查看、复制或单独撤销。刷新页面后全部失效。';
   $('keyReceipt').classList.remove('key-arrival');
   void $('keyReceipt').offsetWidth;
   $('keyReceipt').classList.add('key-arrival');
@@ -103,24 +116,78 @@ $('copyKey').addEventListener('click', async () => {
     $('keyIssueStatus').textContent = '可以手动复制上方刚生成的教学密钥。';
   }
 });
-$('revokeKey').addEventListener('click', () => {
-  activeKey = null;
-  syncTeachingKey();
-  completed.clear();
-  updateProgress();
-  $('keyReceipt').hidden = true;
-  $('createKey').disabled = false;
-  $('createKey').textContent = '重新创建教学密钥';
-  $('keyIssueStatus').textContent =
-    '教学密钥已撤销，后面的认证检查将无法通过。可重新创建一把不同的教学密钥；旧值将不能通过练习验证。';
-  ['ui', 'drag', 'write'].forEach((id) => {
-    stopScenario(id, '密钥已撤销，请重新领取后验证。');
-    $('feedback-' + id).replaceChildren();
+$('revokeKey').addEventListener('click', () => revokeTeachingKey(activeKey));
+function requestKeyFor(id) {
+  return id === 'ui'
+    ? $('apiKey').value.trim()
+    : id === 'write'
+      ? $('writeKey').value.trim()
+      : cards.find((c) => c.id === 'auth').text;
+}
+function renderKeyList() {
+  const list = $('keyList');
+  list.replaceChildren();
+  keyRecords.forEach((record) => {
+    const li = document.createElement('li');
+    li.className =
+      'key-record' +
+      (record.revoked ? ' revoked' : '') +
+      (record.key === activeKey ? ' current' : '');
+    const title = document.createElement('strong');
+    title.textContent =
+      record.label +
+      (record.revoked
+        ? ' · 已撤销'
+        : record.key === activeKey
+          ? ' · 当前查看'
+          : ' · 有效');
+    const code = document.createElement('code');
+    code.textContent = record.key;
+    li.append(title, code);
+    if (!record.revoked) {
+      const select = document.createElement('button');
+      select.className = 'text-button';
+      select.textContent = '查看 / 用于示范';
+      select.type = 'button';
+      select.addEventListener('click', () => {
+        activeKey = record.key;
+        syncTeachingKey();
+        $('keyIssueStatus').textContent =
+          '已切换查看 ' + record.label + '。其他未撤销的密钥仍然有效。';
+      });
+      const revoke = document.createElement('button');
+      revoke.type = 'button';
+      revoke.className = 'text-button';
+      revoke.textContent = '撤销这一把';
+      revoke.addEventListener('click', () => revokeTeachingKey(record.key));
+      li.append(select, revoke);
+    }
+    list.append(li);
   });
-  $('uiResponse').textContent = '凭证已撤销，请重新创建教学密钥后再检测连接。';
-  $('dragResponse').hidden = true;
-  $('writeResponse').hidden = true;
-});
+  $('keyCount').textContent =
+    validKeys.size + ' 把有效 / 共创建 ' + keyRecords.length + ' 把';
+}
+function revokeTeachingKey(key) {
+  if (!validKeys.has(key)) return;
+  validKeys.delete(key);
+  keyRecords.find((r) => r.key === key).revoked = true;
+  if (activeKey === key) activeKey = [...validKeys].at(-1) || null;
+  ['ui', 'drag', 'write'].forEach((id) => {
+    if (completedKeys.get(id) === key || scenarioStates.get(id)?.key === key) {
+      completed.delete(id);
+      completedKeys.delete(id);
+      stopScenario(id, '本次请求使用的密钥已撤销，请换一把有效密钥。');
+      $('feedback-' + id).replaceChildren();
+      $(id + 'Response').hidden = true;
+    }
+  });
+  syncTeachingKey();
+  updateProgress();
+  $('keyIssueStatus').textContent =
+    '已撤销所选密钥，其他 ' +
+    validKeys.size +
+    ' 把密钥继续有效。已填入的其他有效密钥无需更换。';
+}
 function resetAddressLab() {
   $('addressFeedback').textContent =
     '请按当前应用会补的路径，选一个合适的地址。';
@@ -186,7 +253,7 @@ $('requestForm').addEventListener('submit', (e) => {
       key: $('apiKey').value,
       model: $('connectionModel').value,
     },
-    activeKey,
+    validKeys,
   );
   feedback(
     'ui',
@@ -210,13 +277,22 @@ const cards = [
 let slots = { key: null, auth: null, content: null },
   selected = null;
 function syncTeachingKey() {
-  cards.find((c) => c.id === 'auth').text = activeKey || '先领取教学密钥';
-  slots.auth = null;
+  $('issuedKey').value = activeKey || '';
+  $('keyReceipt').hidden = !activeKey;
+  const card = cards.find((c) => c.id === 'auth');
+  if (!slots.auth || !validKeys.has(card.text)) {
+    if (!validKeys.has(card.text)) slots.auth = null;
+    const next = activeKey || '先领取教学密钥';
+    if (card.text !== next) {
+      card.text = next;
+      renderCards();
+    }
+  }
   document
     .querySelectorAll('[data-issued-key]')
     .forEach((el) => (el.textContent = activeKey || 'demo-key-…（待领取）'));
-  renderCards();
-  updatePreview();
+  renderKeyList();
+  updatePreview(false);
 }
 const slotNames = { auth: '① 密钥', key: '② 字段名', content: '③ 提问内容' };
 const dragAnnouncement = document.createElement('p');
@@ -304,7 +380,7 @@ renderCards();
 $('checkDrag').addEventListener('click', () => {
   const errors = Lesson.validateKey(
     slots.auth === 'auth' ? cards.find((c) => c.id === 'auth').text : '',
-    activeKey,
+    validKeys,
   );
   if (slots.key !== 'model')
     errors.push('正文空位②后面是 demo-small，所以字段名应为 "model"。');
@@ -358,7 +434,7 @@ $('formatJson').addEventListener('click', () => {
 });
 $('checkWrite').addEventListener('click', () => {
   const result = Lesson.parseAndValidate($('jsonEditor').value);
-  result.errors.unshift(...Lesson.validateKey($('writeKey').value, activeKey));
+  result.errors.unshift(...Lesson.validateKey($('writeKey').value, validKeys));
   feedback(
     'write',
     result.errors,
@@ -381,7 +457,7 @@ $('writeKey').addEventListener('input', () => {
   const value = $('writeKey').value.trim();
   $('writeHeaderPreview').textContent =
     'Authorization: Bearer ' +
-    (activeKey && value === activeKey
+    (validKeys.has(value)
       ? value
       : value
         ? '[只接收教学密钥]'
@@ -400,6 +476,7 @@ document.querySelectorAll('[data-reset]').forEach((b) =>
     const id = b.dataset.reset;
     stopScenario(id);
     completed.delete(id);
+    completedKeys.delete(id);
     updateProgress();
     $('feedback-' + id).replaceChildren();
     if (id === 'ui') {
@@ -579,7 +656,7 @@ function runScenario(id, prompt, answer) {
     behavior: reducedMotion() ? 'instant' : 'smooth',
     block: 'nearest',
   });
-  const state = { timer: null, wait: null };
+  const state = { timer: null, wait: null, key: requestKeyFor(id) };
   scenarioStates.set(id, state);
   status.textContent = '请求已发出 → 服务验证教学密钥 → 等待首段回答';
   status.classList.add('working');

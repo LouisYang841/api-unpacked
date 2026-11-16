@@ -65,21 +65,21 @@
       Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
     );
   }
-  function validateKey(value, activeKey) {
+  function validateKey(value, validKeys) {
     const errors = [];
-    if (!activeKey)
+    if (!validKeys?.size)
       errors.push('请先返回第 2 步，在服务商控制台点击“创建教学密钥”。');
     const key = String(value ?? '').trim();
-    if (activeKey && key !== activeKey)
+    if (validKeys?.size && !validKeys.has(key))
       errors.push(
         /^Bearer\s|^Authorization:/i.test(key)
           ? '这里只填密钥本身，不要再加 Bearer 或 Authorization:。'
-          : '密钥与本次签发的教学密钥不一致。请返回控制台复制最新的密钥；旧密钥和真实密钥不能用于本课。',
+          : '这不是当前有效的教学密钥。请从控制台复制任意一把未撤销的密钥；已撤销的密钥和真实密钥不能用于本课。',
       );
     return errors;
   }
-  function validateConnection(data, activeKey) {
-    const errors = validateKey(data.key, activeKey);
+  function validateConnection(data, validKeys) {
+    const errors = validateKey(data.key, validKeys);
     const base = String(data.baseUrl ?? '')
       .trim()
       .replace(/\/+$/, '');
