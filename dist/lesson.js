@@ -57,21 +57,29 @@
       .replace(/\/+$/, '');
     return clean ? clean + (endpointRules[rule]?.suffix ?? '') : '';
   }
-  function validateKey(value, issued) {
+  function generateTeachingKey(cryptoSource = root.crypto) {
+    const bytes = new Uint8Array(8);
+    cryptoSource.getRandomValues(bytes);
+    return (
+      'demo-key-' +
+      Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
+    );
+  }
+  function validateKey(value, activeKey) {
     const errors = [];
-    if (!issued)
+    if (!activeKey)
       errors.push('请先返回第 2 步，在服务商控制台点击“创建教学密钥”。');
     const key = String(value ?? '').trim();
-    if (key !== 'this-is-a-key')
+    if (activeKey && key !== activeKey)
       errors.push(
         /^Bearer\s|^Authorization:/i.test(key)
-          ? '这里只填密钥本身 this-is-a-key，不要再加 Bearer 或 Authorization:。'
-          : '请填入控制台领到的教学密钥 this-is-a-key；不要使用真实密钥。',
+          ? '这里只填密钥本身，不要再加 Bearer 或 Authorization:。'
+          : '密钥与本次签发的教学密钥不一致。请返回控制台复制最新的密钥；旧密钥和真实密钥不能用于本课。',
       );
     return errors;
   }
-  function validateConnection(data, issued) {
-    const errors = validateKey(data.key, issued);
+  function validateConnection(data, activeKey) {
+    const errors = validateKey(data.key, activeKey);
     const base = String(data.baseUrl ?? '')
       .trim()
       .replace(/\/+$/, '');
@@ -113,6 +121,7 @@
     prompts,
     validateBody,
     validateKey,
+    generateTeachingKey,
     validateConnection,
     composeEndpoint,
     endpointRules,

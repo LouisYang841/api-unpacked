@@ -238,7 +238,7 @@
             <label
               >收到的 API Key<input
                 id="issuedKey"
-                value="this-is-a-key"
+                value=""
                 readonly
                 autocomplete="off"
                 spellcheck="false" /></label
@@ -249,7 +249,8 @@
               模拟撤销密钥
             </button>
             <p class="fineprint">
-              这是无效教学占位符，不是真实密钥；不会产生权限或费用。真实服务商创建的密钥可能只展示一次，请按其提示安全保存。
+              本次随机生成的 demo-key-
+              开头字符串只用于当前页面模拟，不是真实服务凭证。刷新页面后需重新生成。真实平台创建的密钥可能只展示一次，请按其说明安全保存。
             </p>
           </div>
           <p id="keyIssueStatus" role="status">
@@ -266,7 +267,7 @@
         <div class="remember">
           <b>应用里的 Key 输入框，通常只填密钥本身</b>
           <p>
-            本课填 <code>this-is-a-key</code>，不用自己加 <code>Bearer</code> 或
+            只粘贴上方收到的密钥本身，不用自己加 <code>Bearer</code> 或
             <code>Authorization:</code>。请求头通常由应用生成，稍后会演示。
           </p>
         </div>
@@ -583,7 +584,7 @@ API 基础地址：https://api.example.com/v1
         </div>
         <pre class="light-code">
 POST https://api.example.com/v1/chat/completions
-Authorization: Bearer this-is-a-key
+Authorization: Bearer <span data-issued-key="">demo-key-…（待领取）</span>
 Content-Type: application/json
 
 { "model": "demo-small", "messages": [ ... ] }</pre>
@@ -1035,8 +1036,8 @@ Content-Type: application/json
         <div class="explain-box">
           <strong>迁移清单：目标是成功聊一句，不要求自己写请求。</strong>
           <p>
-            回到真实应用，把下面五步走完。刚才的练习只使用了假地址、假模型和
-            <code>this-is-a-key</code>，它们不能用于真实服务。
+            回到真实应用，把下面五步走完。刚才使用的假地址、假模型和随机生成的
+            <code>demo-key-…</code> 都仅供教学，不能用于真实服务。
           </p>
         </div>
         <ol class="instructions">

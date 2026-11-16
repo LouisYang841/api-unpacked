@@ -1,6 +1,6 @@
 const $ = (id) => document.getElementById(id);
 const completed = new Set();
-let keyIssued = false;
+let activeKey = null;
 const scenarioStates = new Map();
 function feedback(id, errors, success) {
   const box = $('feedback-' + id);
@@ -48,7 +48,7 @@ function updatePreview() {
     'POST ' +
     (endpoint || '__等待填写地址__') +
     '\nAuthorization: Bearer ' +
-    (key === 'this-is-a-key'
+    (activeKey && key === activeKey
       ? key
       : key
         ? '[已隐藏：本课只接收教学密钥]'
@@ -69,37 +69,50 @@ $('toggleKey').addEventListener('click', () => {
   $('toggleKey').textContent = show ? '隐藏教学密钥' : '显示教学密钥';
 });
 $('createKey').addEventListener('click', () => {
-  keyIssued = true;
+  try {
+    activeKey = Lesson.generateTeachingKey();
+  } catch {
+    $('keyIssueStatus').textContent =
+      '无法生成教学密钥，请使用支持 Web Crypto 的浏览器访问此 HTTPS 页面。';
+    return;
+  }
+  $('issuedKey').value = activeKey;
+  syncTeachingKey();
   $('keyReceipt').hidden = false;
   $('createKey').disabled = true;
   $('createKey').textContent = '教学密钥已签发';
   $('keyIssueStatus').textContent =
-    '已收到教学密钥。复制或记住 this-is-a-key，下一步带到第三方应用设置里。';
+    '已收到本次随机生成的教学密钥。复制它，下一步带到第三方应用设置里。此密钥只在当前页面有效，刷新后需重新生成。';
   $('keyReceipt').classList.remove('key-arrival');
   void $('keyReceipt').offsetWidth;
   $('keyReceipt').classList.add('key-arrival');
   celebrate($('keyReceipt'));
 });
 $('copyKey').addEventListener('click', async () => {
+  if (!activeKey) {
+    $('keyIssueStatus').textContent = '请先创建一把教学密钥。';
+    return;
+  }
   try {
     if (!window.navigator.clipboard?.writeText) throw new Error('unavailable');
-    await window.navigator.clipboard.writeText('this-is-a-key');
-    $('keyIssueStatus').textContent = '已复制教学密钥：this-is-a-key。';
+    await window.navigator.clipboard.writeText(activeKey);
+    $('keyIssueStatus').textContent = '已复制本次生成的教学密钥。';
   } catch {
     $('issuedKey').focus();
     $('issuedKey').select?.();
-    $('keyIssueStatus').textContent = '可以手动复制上方密钥：this-is-a-key。';
+    $('keyIssueStatus').textContent = '可以手动复制上方刚生成的教学密钥。';
   }
 });
 $('revokeKey').addEventListener('click', () => {
-  keyIssued = false;
+  activeKey = null;
+  syncTeachingKey();
   completed.clear();
   updateProgress();
   $('keyReceipt').hidden = true;
   $('createKey').disabled = false;
   $('createKey').textContent = '重新创建教学密钥';
   $('keyIssueStatus').textContent =
-    '教学密钥已撤销，后面的认证检查将无法通过。可重新创建；真实平台通常会签发不同的新密钥，本课始终使用同一个无效占位符。';
+    '教学密钥已撤销，后面的认证检查将无法通过。可重新创建一把不同的教学密钥；旧值将不能通过练习验证。';
   ['ui', 'drag', 'write'].forEach((id) => {
     stopScenario(id, '密钥已撤销，请重新领取后验证。');
     $('feedback-' + id).replaceChildren();
@@ -173,7 +186,7 @@ $('requestForm').addEventListener('submit', (e) => {
       key: $('apiKey').value,
       model: $('connectionModel').value,
     },
-    keyIssued,
+    activeKey,
   );
   feedback(
     'ui',
@@ -191,11 +204,20 @@ const cards = [
   { id: 'assistant', text: '"assistant"' },
   { id: 'content', text: '"用一句话解释彩虹。"' },
   { id: 'messages', text: '"messages"' },
-  { id: 'auth', text: 'this-is-a-key' },
+  { id: 'auth', text: '先领取教学密钥' },
   { id: 'model', text: '"model"' },
 ];
 let slots = { key: null, auth: null, content: null },
   selected = null;
+function syncTeachingKey() {
+  cards.find((c) => c.id === 'auth').text = activeKey || '先领取教学密钥';
+  slots.auth = null;
+  document
+    .querySelectorAll('[data-issued-key]')
+    .forEach((el) => (el.textContent = activeKey || 'demo-key-…（待领取）'));
+  renderCards();
+  updatePreview();
+}
 const slotNames = { auth: '① 密钥', key: '② 字段名', content: '③ 提问内容' };
 const dragAnnouncement = document.createElement('p');
 dragAnnouncement.className = 'drag-help';
@@ -211,7 +233,8 @@ function renderCards() {
       const b = document.createElement('button');
       b.className = 'card' + (selected === c.id ? ' selected' : '');
       b.textContent = c.text;
-      b.draggable = true;
+      b.disabled = c.id === 'auth' && !activeKey;
+      b.draggable = !b.disabled;
       b.dataset.card = c.id;
       b.setAttribute('aria-pressed', String(selected === c.id));
       b.addEventListener('click', () => {
@@ -280,8 +303,8 @@ document.querySelectorAll('[data-slot]').forEach((b) => {
 renderCards();
 $('checkDrag').addEventListener('click', () => {
   const errors = Lesson.validateKey(
-    slots.auth === 'auth' ? 'this-is-a-key' : '',
-    keyIssued,
+    slots.auth === 'auth' ? cards.find((c) => c.id === 'auth').text : '',
+    activeKey,
   );
   if (slots.key !== 'model')
     errors.push('正文空位②后面是 demo-small，所以字段名应为 "model"。');
@@ -335,7 +358,7 @@ $('formatJson').addEventListener('click', () => {
 });
 $('checkWrite').addEventListener('click', () => {
   const result = Lesson.parseAndValidate($('jsonEditor').value);
-  result.errors.unshift(...Lesson.validateKey($('writeKey').value, keyIssued));
+  result.errors.unshift(...Lesson.validateKey($('writeKey').value, activeKey));
   feedback(
     'write',
     result.errors,
@@ -348,17 +371,17 @@ $('checkWrite').addEventListener('click', () => {
   }
 });
 const hints = {
-  ui: '先到第 2 步模拟创建密钥。Base URL 填 https://api.example.com/v1；API Key 只填 this-is-a-key；模型选 demo-small。',
-  drag: '① 教学密钥 this-is-a-key 放在 Bearer 后面；② 模型字段名是 "model"；③ 放整句彩虹提问。密钥不属于 JSON。',
+  ui: '先到第 2 步模拟创建密钥。Base URL 填 https://api.example.com/v1；API Key 填控制台本次生成的密钥；模型选 demo-small。',
+  drag: '① 控制台本次生成的教学密钥放在 Bearer 后面；② 模型字段名是 "model"；③ 放整句彩虹提问。密钥不属于 JSON。',
   write:
-    '上方 Key 填 this-is-a-key；下面 JSON 两个占位符按顺序替换成 demo-small、用一句话解释月食。保留双引号。',
+    '上方 Key 填控制台本次生成的密钥；下面 JSON 两个占位符按顺序替换成 demo-small、用一句话解释月食。保留双引号。',
 };
 $('writeKey').addEventListener('input', () => {
   stopScenario('write');
   const value = $('writeKey').value.trim();
   $('writeHeaderPreview').textContent =
     'Authorization: Bearer ' +
-    (value === 'this-is-a-key'
+    (activeKey && value === activeKey
       ? value
       : value
         ? '[只接收教学密钥]'
