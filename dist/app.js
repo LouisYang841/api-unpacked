@@ -21,7 +21,6 @@ const requirementTaskMap = {
 };
 const learningStorageKey = 'api-unpacked-learning-v1';
 const answeredQuestions = new Set();
-const rewardedQuestions = new Set();
 let activeKey = null;
 let revealedKey = null;
 let practiceKeysReady = false;
@@ -504,7 +503,7 @@ $('testConnection').addEventListener('click', () => {
   setConnectionNotice('连接成功。现在可以发送消息。');
   $('scenario-status-ui').textContent =
     '服务商已连接 · demo-small 已选中 · 等待发送消息';
-  celebrate($('connectionStatus'));
+  flashSuccess($('connectionStatus'));
 });
 $('chatForm').addEventListener('submit', (event) => {
   event.preventDefault();
@@ -863,27 +862,72 @@ document
 function reducedMotion() {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
-function celebrate(el) {
-  el.classList.remove('success-flash');
-  void el.offsetWidth;
-  el.classList.add('success-flash');
+function flashSuccess(element) {
+  if (!element) return;
+  element.classList.remove('success-flash');
+  void element.offsetWidth;
+  element.classList.add('success-flash');
+}
+function celebrate(element, questionId = '') {
+  if (!element) return;
+  flashSuccess(element);
   if (reducedMotion()) return;
-  el.querySelector('.celebration')?.remove();
-  const overlay = document.createElement('span');
-  overlay.className = 'celebration';
-  overlay.setAttribute('aria-hidden', 'true');
-  for (let i = 0; i < 12; i++) {
-    const p = document.createElement('i');
-    p.style.setProperty('--x', (i - 5.5) * 14 + 'px');
-    p.style.setProperty('--rot', (i % 2 ? 1 : -1) * (80 + i * 21) + 'deg');
-    p.style.setProperty('--delay', (i % 4) * 35 + 'ms');
-    p.style.background = ['#3c99c7', '#e5ad52', '#66ad88', '#c787a6'][i % 4];
-    overlay.append(p);
+  document
+    .querySelectorAll('.confetti-layer')
+    .forEach((layer) => layer.remove());
+  const width =
+    window.innerWidth || document.documentElement.clientWidth || 360;
+  const height =
+    window.innerHeight || document.documentElement.clientHeight || 720;
+  const rect = element.getBoundingClientRect?.() || {
+    left: 0,
+    top: height * 0.35,
+    width,
+    height: 40,
+  };
+  const x = Math.max(24, Math.min(width - 24, rect.left + rect.width / 2));
+  const y = Math.max(
+    40,
+    Math.min(height * 0.65, rect.top + Math.min(rect.height, 100) / 2),
+  );
+  const layer = document.createElement('span');
+  layer.className = 'celebration confetti-layer';
+  layer.dataset.questionId = questionId;
+  layer.setAttribute('aria-hidden', 'true');
+  const count = 48,
+    colors = ['#3b9ed7', '#e9b44c', '#65b78a', '#d77e9c', '#9e8bd3', '#ef8658'];
+  for (let i = 0; i < count; i++) {
+    const piece = document.createElement('i');
+    piece.className = 'confetti-piece';
+    piece.style.left = x + 'px';
+    piece.style.top = y + 'px';
+    const dx = (Math.random() - 0.5) * Math.min(560, width * 1.5);
+    piece.style.setProperty('--dx', dx + 'px');
+    piece.style.setProperty('--mid-x', dx * 0.45 + 'px');
+    piece.style.setProperty('--lift', -90 - Math.random() * 140 + 'px');
+    piece.style.setProperty('--fall', 140 + Math.random() * 170 + 'px');
+    piece.style.setProperty(
+      '--spin',
+      (i % 2 ? 1 : -1) * (180 + Math.random() * 540) + 'deg',
+    );
+    piece.style.setProperty('--duration', 1100 + Math.random() * 300 + 'ms');
+    piece.style.setProperty('--delay', Math.random() * 90 + 'ms');
+    piece.style.background = colors[i % colors.length];
+    piece.style.width = 5 + Math.random() * 5 + 'px';
+    piece.style.height = 7 + Math.random() * 6 + 'px';
+    piece.style.borderRadius = i % 4 === 0 ? '50%' : '1px';
+    layer.append(piece);
   }
-  overlay.addEventListener('animationend', () => overlay.remove(), {
-    once: true,
+  let finished = 0;
+  layer.addEventListener('animationend', (event) => {
+    if (
+      event.target.classList.contains('confetti-piece') &&
+      ++finished >= count
+    )
+      layer.remove();
   });
-  el.append(overlay);
+  (element.closest?.('dialog[open]') || document.body).append(layer);
+  window.setTimeout(() => layer.remove(), 1700);
 }
 function stopScenario(id, message = '等待你完成请求设置。') {
   const state = scenarioStates.get(id);
@@ -1011,7 +1055,7 @@ function runScenario(id, prompt, answer) {
     status.textContent = '回复完成 · 200 OK';
     status.className = 'scenario-status complete';
     scenarioStates.delete(id);
-    celebrate($('scenario-' + id));
+    flashSuccess($('scenario-' + id));
   }
   if (reducedMotion()) {
     finish();
@@ -1249,9 +1293,7 @@ document.addEventListener('input', (event) =>
   event.target.classList?.remove('question-field-missing'),
 );
 function rewardCorrectAnswer(id, element) {
-  if (rewardedQuestions.has(id)) return;
-  rewardedQuestions.add(id);
-  celebrate(element);
+  celebrate(element, id);
   if (!reducedMotion()) {
     try {
       window.navigator.vibrate?.(18);

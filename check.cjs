@@ -32,6 +32,12 @@ assert(L.validateBody(valid,L.prompts.ui).length);
 const html=fs.readFileSync('dist/index.html','utf8');const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]);assert.equal(new Set(ids).size,ids.length,'IDs must be unique');
 const app=fs.readFileSync('dist/app.js','utf8');for(const m of app.matchAll(/\$\('([^']+)'\)/g)){assert(ids.includes(m[1]),'Missing element '+m[1]);}
 for(const file of ['style.css','lesson.js','app.js'])assert(fs.existsSync('dist/'+file));
+const clientFile=html.match(/src="(client\.[a-f0-9]{12}\.js)"/)?.[1];
+const cssFile=html.match(/href="(style\.[a-f0-9]{12}\.css)"/)?.[1];
+assert(clientFile&&cssFile,'Page references versioned script and style assets');
+assert(!/src="(?:app|lesson)\.js"/.test(html),'Page must not mix separately cached client scripts');
+assert.equal(fs.readFileSync('dist/'+clientFile,'utf8'),fs.readFileSync('dist/lesson.js','utf8')+'\n;\n'+app,'Versioned bundle matches current source');
+assert.equal(fs.readFileSync('dist/'+cssFile,'utf8'),fs.readFileSync('dist/style.css','utf8'),'Versioned style matches current source');
 const chapters=[...html.matchAll(/data-step="(\d+)"/g)].map(m=>Number(m[1]));
 assert.deepEqual(chapters,[0,1,2,3,4,5,6,7],'Eight chapters should follow the teaching sequence');
 for(const chapter of chapters)assert(ids.includes('heading-'+chapter));

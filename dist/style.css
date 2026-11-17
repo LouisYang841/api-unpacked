@@ -1876,3 +1876,47 @@ button:disabled {
     animation: none;
   }
 }
+.confetti-layer {
+  position: fixed;
+  inset: 0;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2000;
+}
+.confetti-layer .confetti-piece {
+  position: absolute;
+  display: block;
+  margin: 0;
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: answer-confetti var(--duration) cubic-bezier(0.18, 0.67, 0.46, 1)
+    var(--delay) forwards;
+}
+@keyframes answer-confetti {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate(0);
+  }
+  8% {
+    opacity: 1;
+  }
+  42% {
+    opacity: 1;
+    transform: translate3d(var(--mid-x), var(--lift), 0)
+      rotate(calc(var(--spin) * 0.45));
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--dx), var(--fall), 0) rotate(var(--spin));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .confetti-layer {
+    display: none;
+  }
+}

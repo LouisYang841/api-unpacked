@@ -29,6 +29,7 @@ jobs:
           node-version: '24'
       - name: Validate lesson
         run: |
+          node prepare-assets.cjs
           node check.cjs
           node --check dist/app.js
           node --check dist/lesson.js
