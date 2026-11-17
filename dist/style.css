@@ -1849,18 +1849,9 @@ button:disabled {
   }
 }
 
-.answer-confetti-canvas {
+#fx {
   position: fixed;
   inset: 0;
-  display: block;
-  width: 100vw;
-  height: 100vh;
-  height: 100dvh;
   pointer-events: none;
-  z-index: 3000;
-}
-@media (prefers-reduced-motion: reduce) {
-  .answer-confetti-canvas {
-    display: none;
-  }
+  z-index: 10000;
 }

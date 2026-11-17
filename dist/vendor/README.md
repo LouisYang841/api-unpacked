@@ -5,4 +5,4 @@
 - Distribution: npm package `canvas-confetti@1.9.4`, `dist/confetti.browser.js` (unmodified)
 - License: ISC; see `canvas-confetti-LICENSE.txt`.
 
-Bundled locally by `prepare-assets.cjs` before the lesson code. No runtime CDN dependency.
+Retained with older cached releases. Current releases use `reference-confetti.js`, ported from the chemistry reference page.

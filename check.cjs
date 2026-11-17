@@ -36,7 +36,7 @@ const clientFile=html.match(/src="(client\.[a-f0-9]{12}\.js)"/)?.[1];
 const cssFile=html.match(/href="(style\.[a-f0-9]{12}\.css)"/)?.[1];
 assert(clientFile&&cssFile,'Page references versioned script and style assets');
 assert(!/src="(?:app|lesson)\.js"/.test(html),'Page must not mix separately cached client scripts');
-assert.equal(fs.readFileSync('dist/'+clientFile,'utf8'),'/*\n'+fs.readFileSync('dist/vendor/canvas-confetti-LICENSE.txt','utf8')+'\n*/\n'+fs.readFileSync('dist/vendor/canvas-confetti-1.9.4.js','utf8')+'\n;\n'+fs.readFileSync('dist/lesson.js','utf8')+'\n;\n'+app,'Versioned bundle matches current source');
+assert.equal(fs.readFileSync('dist/'+clientFile,'utf8'),fs.readFileSync('dist/reference-confetti.js','utf8')+'\n;\n'+fs.readFileSync('dist/lesson.js','utf8')+'\n;\n'+app,'Versioned bundle matches current source');
 assert.equal(fs.readFileSync('dist/'+cssFile,'utf8'),fs.readFileSync('dist/style.css','utf8'),'Versioned style matches current source');
 const chapters=[...html.matchAll(/data-step="(\d+)"/g)].map(m=>Number(m[1]));
 assert.deepEqual(chapters,[0,1,2,3,4,5,6,7],'Eight chapters should follow the teaching sequence');

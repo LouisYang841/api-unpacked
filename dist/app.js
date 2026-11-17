@@ -28,7 +28,6 @@ const validKeys = new Set();
 const keyRecords = [];
 const completedKeys = new Map();
 const scenarioStates = new Map();
-const confettiSurfaces = new WeakMap();
 let fetchedConnection = null,
   savedConnection = null,
   connectionTested = false,
@@ -872,74 +871,10 @@ function flashSuccess(element) {
 function celebrate(element, questionId = '') {
   if (!element) return;
   flashSuccess(element);
-  if (reducedMotion() || typeof window.confetti?.create !== 'function') return;
-  const host = element.closest?.('dialog[open]') || document.body;
-  let surface = confettiSurfaces.get(host);
-  let createdCanvas = null;
-  try {
-    if (!surface || !surface.canvas.isConnected) {
-      const canvas = document.createElement('canvas');
-      createdCanvas = canvas;
-      canvas.className = 'answer-confetti-canvas';
-      canvas.setAttribute('aria-hidden', 'true');
-      host.append(canvas);
-      if (!canvas.getContext('2d')) {
-        canvas.remove();
-        return;
-      }
-      const fire = window.confetti.create(canvas, {
-        resize: true,
-        useWorker: false,
-        disableForReducedMotion: true,
-      });
-      surface = { canvas, fire, generation: 0 };
-      confettiSurfaces.set(host, surface);
-    }
-    surface.canvas.dataset.questionId = questionId;
-    const width =
-      window.innerWidth || document.documentElement.clientWidth || 360;
-    const height =
-      window.innerHeight || document.documentElement.clientHeight || 720;
-    const rect = element.getBoundingClientRect();
-    const origin = {
-      x: Math.max(0.08, Math.min(0.92, (rect.left + rect.width / 2) / width)),
-      y: Math.max(
-        0.12,
-        Math.min(0.7, (rect.top + Math.min(rect.height, 100) / 2) / height),
-      ),
-    };
-    const generation = ++surface.generation;
-    const result = surface.fire({
-      particleCount: 90,
-      spread: 70,
-      origin,
-      startVelocity: 18,
-      decay: 0.92,
-      gravity: Math.max(6, height / 120),
-      ticks: 300,
-      zIndex: 3000,
-      disableForReducedMotion: true,
-    });
-    const cleanup = () => {
-      if (
-        confettiSurfaces.get(host) === surface &&
-        surface.generation === generation
-      ) {
-        confettiSurfaces.delete(host);
-        surface.fire.reset();
-        surface.canvas.remove();
-      }
-    };
-    if (result && typeof result.then === 'function')
-      result.then(cleanup, cleanup);
-    window.setTimeout(cleanup, 1800);
-  } catch {
-    try {
-      surface?.fire.reset();
-    } catch {}
-    (surface?.canvas || createdCanvas)?.remove();
-    confettiSurfaces.delete(host);
-  }
+  if (reducedMotion() || typeof window.burst !== 'function') return;
+  const canvas = $('fx');
+  if (canvas) canvas.dataset.questionId = questionId;
+  window.burst(20, element.closest?.('dialog[open]') || document.body);
 }
 function stopScenario(id, message = '等待你完成请求设置。') {
   const state = scenarioStates.get(id);
