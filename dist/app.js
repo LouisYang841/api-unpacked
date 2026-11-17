@@ -913,7 +913,10 @@ function celebrate(element, questionId = '') {
       particleCount: 90,
       spread: 70,
       origin,
-      ticks: 160,
+      startVelocity: 18,
+      decay: 0.92,
+      gravity: Math.max(6, height / 120),
+      ticks: 300,
       zIndex: 3000,
       disableForReducedMotion: true,
     });
@@ -929,7 +932,7 @@ function celebrate(element, questionId = '') {
     };
     if (result && typeof result.then === 'function')
       result.then(cleanup, cleanup);
-    else window.setTimeout(cleanup, 3000);
+    window.setTimeout(cleanup, 1800);
   } catch {
     try {
       surface?.fire.reset();
