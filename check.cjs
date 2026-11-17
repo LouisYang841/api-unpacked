@@ -7,7 +7,7 @@ const connection={baseUrl:'https://api.example.com/v1',key:teachingKey,model:'de
 assert.deepEqual(L.validateConnection(connection,validKeys),[]);
 assert(L.validateConnection(connection,null).length,'An unissued or revoked teaching key cannot authenticate');
 assert(L.validateConnection({...connection,key:''},validKeys).length);
-assert(L.validateConnection({...connection,key:'Bearer '+teachingKey},validKeys).some(x=>x.includes('Bearer')));
+assert(L.validateConnection({...connection,key:'Bearer '+teachingKey},validKeys).some(x=>x.includes('密钥值')));
 assert.deepEqual(L.validateConnection({...connection,baseUrl:'https://api.example.com/v1/chat/completions'},validKeys),[]);
 assert.deepEqual(L.validateConnection({...connection,baseUrl:'https://api.example.com'},validKeys),[]);
 assert(L.validateConnection({...connection,protocol:'anthropic'},validKeys).some(e=>e.includes('OpenAI')));
@@ -50,6 +50,8 @@ assert(ids.includes('pageRequirement')&&ids.includes('replayDemo'),'Lesson gate 
 assert(!html.includes('data-address-rule'),'Standalone endpoint questions are removed');
 assert(ids.includes('protocolType')&&ids.includes('useResponses'),'Protocol and Responses controls exist');
 assert(!/\b(?:fetch|XMLHttpRequest|WebSocket)\s*\(/.test(app),'All model calls remain simulated');
+for(const id of ['keyName','protocolType','useResponses','baseUrl','apiKey','connectionModel','writeKey','jsonEditor']){const control=html.match(new RegExp('<(?:input|select|textarea)\\b[^>]*\\bid="'+id+'"[^>]*>'))?.[0]||'';assert(/aria-describedby="[^"]*field-hint-/.test(control),'Field should link to a filling instruction: '+id);}
+assert.equal((html.match(/role="tooltip"/g)||[]).length,12,'Every practice blank has its own hint');
 console.log('通过：服务地址拼接、密钥签发与认证、连接配置、JSON 语法与语义、分步结构、模拟聊天与静态资源检查。');
 
 const bothKeys=new Set([teachingKey,replacementKey]);assert.deepEqual(L.validateKey(teachingKey,bothKeys),[]);assert.deepEqual(L.validateKey(replacementKey,bothKeys),[]);bothKeys.delete(teachingKey);assert(L.validateKey(teachingKey,bothKeys).length);assert.deepEqual(L.validateKey(replacementKey,bothKeys),[]);

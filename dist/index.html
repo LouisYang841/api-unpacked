@@ -36,7 +36,7 @@
           </li>
           <li>
             <button data-go="1">
-              模拟申请 API Key<span id="chapter-mark-1"></span>
+              创建 API Key<span id="chapter-mark-1"></span>
             </button>
           </li>
           <li>
@@ -184,14 +184,11 @@
         <div class="remember">
           <b>本节小结</b>
           <p>
-            前四步带你领取教学密钥、分清地址、配置应用。后面再拆开应用生成的请求，保留卡片和
-            JSON 拓展练习。
+            先在服务商控制台创建密钥，再把地址、密钥和模型配置到聊天应用。随后通过卡片与
+            JSON 练习，了解请求的组成。
           </p>
         </div>
-        <p>
-          换应用也不等于自动迁移聊天记录或会员权益。API
-          额度通常单独管理；是否支持导入旧对话，要看具体应用。
-        </p>
+
         <div data-question="concept-api" class="quick-check">
           <span class="small-label">本节练习 · 请选择一项</span>
           <h3>检查理解：连接第三方聊天应用时，主要需要准备什么？</h3>
@@ -222,7 +219,7 @@
             data-explanation="服务地址决定请求发到哪里，API Key 用于认证，模型名称决定使用哪个模型。"
           ></p>
         </div>
-        <p class="transition">继续学习：先到模拟服务商控制台领一把调用密钥。</p>
+        <p class="transition">继续学习：到服务商控制台创建一把 API 密钥。</p>
       </section>
       <section
         class="chapter"
@@ -237,18 +234,17 @@
           <strong>学习目标：学会命名、创建、复制和撤销 API 密钥。</strong>
           <p>
             API Key
-            是服务商签发的秘密凭证。服务收到请求后用它验证调用权限，并关联额度和用量。<strong
-              >你的登录密码不能当作 API Key。</strong
-            >
+            是服务商签发的调用凭证。服务通过它验证权限，并记录调用用量。API Key
+            用于程序调用，账号密码用于登录网站。
           </p>
           <p>
-            本节使用模拟控制台。操作顺序为：点击“创建密钥”→ 填写名称 → 确认创建
-            → 复制密钥。多把密钥可分别用于不同应用，未撤销的密钥持续有效。
+            请依次完成：点击“创建密钥”→ 输入名称 → 确认创建 →
+            复制密钥。可以为不同应用分别创建密钥。
           </p>
         </div>
         <div class="provider-console">
           <div class="console-heading">
-            <strong>示例模型服务 · 控制台</strong><span>本地模拟</span>
+            <strong>开发者控制台</strong><span>API 管理</span>
           </div>
           <div class="provider-facts">
             <p>API 基础地址：<code>https://api.example.com/v1</code></p>
@@ -259,9 +255,8 @@
             </p>
             <p>可用模型 ID：<code>demo-small</code></p>
             <p>
-              本示例服务支持：<strong>OpenAI 兼容</strong><br />Chat
-              Completions：支持；Responses API：支持。<br />Anthropic / Gemini
-              原生兼容接口：本例未提供。
+              接口类型：<strong>OpenAI 兼容</strong><br />可用接口：Chat
+              Completions、Responses
             </p>
           </div>
           <button class="primary" id="createKey" type="button">
@@ -279,46 +274,28 @@
                 autocomplete="off"
                 spellcheck="false" /></label
             ><button id="copyKey" class="secondary" type="button">
-              复制教学密钥
+              复制密钥
             </button>
             <button id="revokeKey" class="text-button" type="button">
               撤销当前查看的密钥
             </button>
-            <p class="fineprint">
-              请区分密钥名称与密钥值。真实平台可能只显示一次密钥值；为方便练习，本页允许再次查看。教学密钥仅在本页有效，刷新后全部失效。
-            </p>
           </div>
           <p id="keyIssueStatus" role="status">
             尚未创建密钥。请先点击上方按钮。
           </p>
           <div class="key-manager">
             <p>
-              <strong>教学密钥列表</strong>
+              <strong>密钥列表</strong>
               <span id="keyCount">0 把有效 / 共创建 0 把</span>
             </p>
-            <p class="field-help">
-              列表显示名称、创建时间及密钥末尾字符；请选择“查看 /
-              用于示范”读取教学密钥。
-            </p>
+            <p class="field-help">选择一条密钥进行查看、复制或撤销。</p>
             <ul id="keyList" class="key-list"></ul>
-            <p class="field-help">
-              可同时保留多把密钥。切换查看只改变示范值，不会使其他有效密钥失效，也不会改掉已经填入的密钥。撤销仅影响使用那把密钥的练习。
-            </p>
           </div>
         </div>
-        <h3>为什么需要保密？</h3>
-        <p>
-          持有真实密钥的人可能使用它的权限和额度。只把密钥交给可信应用，并确认应用如何保存配置、是否会经过它的服务器。不要把密钥发进聊天内容、截图或公开仓库。
-        </p>
-        <p>
-          如果泄露，到官方控制台撤销并更换密钥；只删除公开文字不能让旧密钥失效。不同服务商的密钥通常不能互换，<strong>地址与密钥要来自你准备连接的同一家服务</strong>。
-        </p>
+
         <div class="remember">
           <b>本节小结</b>
-          <p>
-            只粘贴上方收到的密钥本身，不用自己加 <code>Bearer</code> 或
-            <code>Authorization:</code>。请求头通常由应用生成，稍后会演示。
-          </p>
+          <p>在应用的 API Key 输入框中粘贴密钥值，应用会把它加入认证请求头。</p>
         </div>
         <p class="transition">
           继续学习：将服务商地址和刚创建的密钥填入第三方应用，完成第一次对话。
@@ -377,31 +354,28 @@
           兼容格式。选择依据是服务商公布的接口，而不是模型名字。
         </p>
         <div class="remember">
-          <b>本节要点</b>
+          <b>接口选择</b>
           <p>
-            OpenAI 兼容并不自动表示支持
-            Responses。只有服务商与所用应用都支持相应接口时，才能启用它。路径和数据格式由应用处理，不必先学习手动拼接网址。
+            根据服务商提供的接口类型选择兼容格式。此服务支持 OpenAI 兼容的 Chat
+            Completions 和 Responses。
           </p>
         </div>
         <div class="provider-facts">
           <strong>观察示例：对照服务商提供的信息</strong>
           <p>
-            基础地址：<code>https://api.example.com/v1</code
-            ><br />密钥：在上一步模拟创建并领取<br />模型 ID：<code
-              >demo-small</code
-            >
+            API 地址：<code>https://api.example.com/v1</code><br />API
+            Key：使用刚创建的密钥<br />模型 ID：<code>demo-small</code>
           </p>
           <p>
-            本示例服务支持：<strong>OpenAI 兼容</strong><br />Chat
-            Completions：支持；Responses API：支持。<br />Anthropic / Gemini
-            原生兼容接口：本例未提供。
+            接口类型：<strong>OpenAI 兼容</strong><br />可用接口：Chat
+            Completions、Responses
           </p>
         </div>
         <h3>动手操作：完成一次连接</h3>
         <ol class="instructions">
           <li>
             确认接口兼容类型；本例选择 OpenAI 兼容。可按服务商说明启用
-            Responses，再填写地址并粘贴有效教学密钥。
+            Responses，再填写地址并粘贴有效密钥。
           </li>
           <li>点击“获取模型列表”，再选择 demo-small。</li>
           <li>点击“保存配置”。保存成功后，再点击“检测连接”。</li>
@@ -411,67 +385,126 @@
           <div class="task">
             <span class="task-icon">⚙</span>
             <div>
-              <strong>示例聊天应用 · 模型服务设置</strong>
-              <p>
-                本模拟应用会自动整理示例服务的域名、基础地址或完整聊天接口地址。
-              </p>
+              <strong>模型服务设置</strong>
+              <p>配置服务连接，选择模型后开始对话。</p>
             </div>
           </div>
           <form id="requestForm" autocomplete="off">
-            <label
-              >接口兼容类型<span class="fixed-tag">按服务商说明选择</span
-              ><select id="protocolType">
-                <option value="openai" selected>OpenAI 兼容</option>
-                <option value="anthropic">Anthropic 兼容</option>
-                <option value="gemini">Gemini 兼容</option>
-              </select></label
-            ><label class="enable-provider"
-              ><input id="useResponses" type="checkbox" /> 使用 Responses
-              API</label
-            >
+            <div class="field-with-hint">
+              <label
+                >接口兼容类型<span class="fixed-tag">按服务商说明选择</span
+                ><select aria-describedby="field-hint-2" id="protocolType">
+                  <option value="openai" selected>OpenAI 兼容</option>
+                  <option value="anthropic">Anthropic 兼容</option>
+                  <option value="gemini">Gemini 兼容</option>
+                </select></label
+              ><span class="hint-wrap"
+                ><button
+                  aria-expanded="false"
+                  aria-controls="field-hint-2"
+                  aria-describedby="field-hint-2"
+                  aria-label="填写提示"
+                  type="button"
+                  class="hint-trigger"
+                >
+                  ?</button
+                ><span role="tooltip" id="field-hint-2" class="hint-tooltip"
+                  >对照上方服务商的接口信息，在列表中选择相同类型。此服务请选择
+                  OpenAI 兼容。</span
+                ></span
+              >
+            </div>
+            <div class="field-with-hint">
+              <label class="enable-provider"
+                ><input
+                  aria-describedby="field-hint-3"
+                  id="useResponses"
+                  type="checkbox"
+                />
+                使用 Responses API</label
+              ><span class="hint-wrap"
+                ><button
+                  aria-expanded="false"
+                  aria-controls="field-hint-3"
+                  aria-describedby="field-hint-3"
+                  aria-label="填写提示"
+                  type="button"
+                  class="hint-trigger"
+                >
+                  ?</button
+                ><span role="tooltip" id="field-hint-3" class="hint-tooltip"
+                  >在服务商文档的 API 列表中查看是否提供
+                  Responses。此服务支持它，勾选即可切换；保持未勾选则使用 Chat
+                  Completions。</span
+                ></span
+              >
+            </div>
             <p id="protocolHelp" class="field-help">
-              本示例服务同时支持 Chat Completions 和 Responses。未勾选时使用
-              Chat Completions；勾选后，应用自动改用 Responses
-              的地址和数据格式。
+              默认使用 Chat Completions。开启后使用 Responses。
             </p>
-            <p class="field-help">
-              真实应用中可能看到“OpenAI
-              兼容”“Anthropic”“Gemini”等接口选项，应按服务商文档选择，不能只看模型名称。
-            </p>
-            <label
-              >① API 地址 / Base URL<span class="fill-tag">你来填</span
-              ><input
-                id="baseUrl"
-                type="text"
-                inputmode="url"
-                placeholder="粘贴服务商提供的 API 地址"
-                spellcheck="false"
-                autocapitalize="off"
-                autocomplete="off"
-            /></label>
-            <p class="field-help">
-              本例可填写 https://api.example.com、https://api.example.com/v1
-              或完整聊天接口；三种写法会连接同一示例服务。
-            </p>
-            <p class="field-help">
-              优先选择应用内置的服务商，地址通常已有默认值；添加自定义服务时，复制服务商文档提供的
-              API 地址。各应用的自动处理规则可能不同，连接失败时再核对说明。
-            </p>
-            <label
-              >② API Key<span class="fill-tag">你来填</span
-              ><input
-                id="apiKey"
-                type="password"
-                placeholder="填写你领到的教学密钥"
-                autocomplete="off"
-                spellcheck="false" /></label
-            ><button
+
+            <div class="field-with-hint">
+              <label
+                >① API 地址 / Base URL<span class="fill-tag">你来填</span
+                ><input
+                  aria-describedby="field-hint-4"
+                  id="baseUrl"
+                  type="text"
+                  inputmode="url"
+                  placeholder="粘贴服务商提供的 API 地址"
+                  spellcheck="false"
+                  autocapitalize="off"
+                  autocomplete="off" /></label
+              ><span class="hint-wrap"
+                ><button
+                  aria-expanded="false"
+                  aria-controls="field-hint-4"
+                  aria-describedby="field-hint-4"
+                  aria-label="填写提示"
+                  type="button"
+                  class="hint-trigger"
+                >
+                  ?</button
+                ><span role="tooltip" id="field-hint-4" class="hint-tooltip"
+                  >从上方服务商信息中复制 API
+                  地址，粘贴到这里：https://api.example.com/v1。</span
+                ></span
+              >
+            </div>
+
+            <div class="field-with-hint">
+              <label
+                >② API Key<span class="fill-tag">你来填</span
+                ><input
+                  aria-describedby="field-hint-5"
+                  id="apiKey"
+                  type="password"
+                  placeholder="填写你领到的密钥"
+                  autocomplete="off"
+                  spellcheck="false" /></label
+              ><span class="hint-wrap"
+                ><button
+                  aria-expanded="false"
+                  aria-controls="field-hint-5"
+                  aria-describedby="field-hint-5"
+                  aria-label="填写提示"
+                  type="button"
+                  class="hint-trigger"
+                >
+                  ?</button
+                ><span role="tooltip" id="field-hint-5" class="hint-tooltip"
+                  >返回第 2
+                  步控制台，查看一把有效密钥，点击“复制密钥”，再回到这里粘贴。</span
+                ></span
+              >
+            </div>
+            <button
               id="toggleKey"
               class="text-button"
               type="button"
               aria-pressed="false"
             >
-              显示教学密钥
+              显示密钥
             </button>
             <button class="text-button" type="button" data-go="1">
               返回控制台领取密钥
@@ -483,16 +516,33 @@
                 >填写地址和密钥后，获取服务商提供的模型。</span
               >
             </div>
-            <label
-              >③ 模型 / Model ID<span class="fill-tag">你来选</span
-              ><select disabled id="connectionModel">
-                <option value="">请先获取模型列表</option>
-              </select></label
-            >
-            <p class="field-help">
-              真实应用可能先点“获取模型列表”，再添加并启用模型；没有列表时，按服务商文档填写精确的模型
-              ID。
-            </p>
+            <div class="field-with-hint">
+              <label
+                >③ 模型 / Model ID<span class="fill-tag">你来选</span
+                ><select
+                  aria-describedby="field-hint-6"
+                  disabled
+                  id="connectionModel"
+                >
+                  <option value="">请先获取模型列表</option>
+                </select></label
+              ><span class="hint-wrap"
+                ><button
+                  aria-expanded="false"
+                  aria-controls="field-hint-6"
+                  aria-describedby="field-hint-6"
+                  aria-label="填写提示"
+                  type="button"
+                  class="hint-trigger"
+                >
+                  ?</button
+                ><span role="tooltip" id="field-hint-6" class="hint-tooltip"
+                  >填好地址和密钥后，点击“获取模型列表”，然后在这里选择
+                  demo-small。</span
+                ></span
+              >
+            </div>
+            <p class="field-help">从服务商返回的列表中选择模型。</p>
             <label class="enable-provider"
               ><input id="providerEnabled" type="checkbox" checked />
               启用此服务商</label
@@ -513,15 +563,11 @@
               请先填写地址与密钥，再获取模型列表。
             </p>
           </form>
-          <div
-            id="scenario-ui"
-            class="scenario-window"
-            aria-label="请求对应的模拟聊天窗口"
-          >
+          <div id="scenario-ui" class="scenario-window" aria-label="聊天窗口">
             <div class="scenario-header">
               <span class="window-dots" aria-hidden="true">● ● ●</span
               ><strong>聊天窗口</strong
-              ><span class="simulation-tag">本地模拟 · 预设回答</span>
+              ><span class="simulation-tag">demo-small</span>
             </div>
             <div class="scenario-status" id="scenario-status-ui" role="status">
               等待你完成请求设置。
@@ -543,12 +589,9 @@
               </div>
               <small>检测连接成功后，即可发送本题消息。</small>
             </form>
-            <div class="stream-note">
-              模拟流式效果用于展示分段接收回答，不会调用真实模型。
-            </div>
           </div>
           <div class="response-placeholder" id="uiResponse">
-            填好连接信息后，这里会出现模拟回答。
+            填好连接信息后，这里会出现回答。
           </div>
           <details class="preview-side">
             <summary>可选：看看应用会替你发出什么</summary>
@@ -562,9 +605,7 @@
         </div>
         <div class="remember">
           <b>检查结果</b>
-          <p>
-            若聊天窗口先出现用户消息，随后逐段显示模型回答，说明本次模拟连接已完成。保存配置只是保存连接信息，并不等于已经发送消息，也不会自动导入旧聊天记录。
-          </p>
+          <p>聊天窗口先显示用户消息，再逐段显示模型回复。</p>
         </div>
         <p>
           <button class="secondary" data-go="7">
@@ -596,9 +637,7 @@
           </p>
         </div>
         <p class="fineprint">
-          下文及后续 JSON 练习统一使用 OpenAI 兼容的 Chat Completions
-          格式。Responses、Anthropic 和 Gemini
-          的字段与返回结构并不完全相同，应用会按选定接口处理。
+          本节及后续 JSON 练习采用 Chat Completions 格式。
         </p>
         <div class="table-scroll">
           <table>
@@ -740,7 +779,7 @@ Content-Type: application/json
             >学习目标：能将密钥放入认证请求头，将模型与提问放入正文。</strong
           >
           <p>
-            正文仍然提问“用一句话解释彩虹。”。这次三个空位分别是：教学密钥、选择模型的字段名、提问内容。
+            正文仍然提问“用一句话解释彩虹。”。这次三个空位分别是：密钥、选择模型的字段名、提问内容。
           </p>
         </div>
         <ol class="instructions">
@@ -777,32 +816,82 @@ Content-Type: application/json
             <div class="json-lines">
               POST https://api.example.com/v1/chat/completions<br />Authorization:
               Bearer
-              <button
-                class="drop"
-                data-slot="auth"
-                aria-label="空位一：API Key"
-              >
-                ① 密钥</button
+              <span class="blank-with-hint"
+                ><button
+                  aria-describedby="field-hint-10"
+                  class="drop"
+                  data-slot="auth"
+                  aria-label="空位一：API Key"
+                >
+                  ① 密钥</button
+                ><span class="hint-wrap"
+                  ><button
+                    aria-expanded="false"
+                    aria-controls="field-hint-10"
+                    aria-describedby="field-hint-10"
+                    aria-label="填写提示"
+                    type="button"
+                    class="hint-trigger"
+                  >
+                    ?</button
+                  ><span role="tooltip" id="field-hint-10" class="hint-tooltip"
+                    >在第 2
+                    步创建密钥后，从卡片区找到对应的密钥卡片，拖到这里。</span
+                  ></span
+                ></span
               ><br />Content-Type: application/json<br /><span
                 class="request-separator"
                 >↓ 以下是 JSON 正文，密钥不放在这里</span
               ><br />{<br />&#160;
-              <button
-                class="drop"
-                data-slot="key"
-                aria-label="空位二：模型字段名"
-              >
-                ② 字段名</button
+              <span class="blank-with-hint"
+                ><button
+                  aria-describedby="field-hint-11"
+                  class="drop"
+                  data-slot="key"
+                  aria-label="空位二：模型字段名"
+                >
+                  ② 字段名</button
+                ><span class="hint-wrap"
+                  ><button
+                    aria-expanded="false"
+                    aria-controls="field-hint-11"
+                    aria-describedby="field-hint-11"
+                    aria-label="填写提示"
+                    type="button"
+                    class="hint-trigger"
+                  >
+                    ?</button
+                  ><span role="tooltip" id="field-hint-11" class="hint-tooltip"
+                    >从卡片区选择 "model"
+                    并拖到这里；也可以先点卡片，再点空位。</span
+                  ></span
+                ></span
               >: "demo-small",<br />&#160; "messages": [<br />&#160; &#160; {
               "role": "system", "content": "你是一位耐心的老师。" },<br />&#160;
               &#160; { "role": "user", "content":
-              <button
-                class="drop"
-                data-slot="content"
-                aria-label="空位三：用户提问"
+              <span class="blank-with-hint"
+                ><button
+                  aria-describedby="field-hint-12"
+                  class="drop"
+                  data-slot="content"
+                  aria-label="空位三：用户提问"
+                >
+                  ③ 提问内容</button
+                ><span class="hint-wrap"
+                  ><button
+                    aria-expanded="false"
+                    aria-controls="field-hint-12"
+                    aria-describedby="field-hint-12"
+                    aria-label="填写提示"
+                    type="button"
+                    class="hint-trigger"
+                  >
+                    ?</button
+                  ><span role="tooltip" id="field-hint-12" class="hint-tooltip"
+                    >从卡片区找到 "用一句话解释彩虹。"，拖到这里。</span
+                  ></span
+                ></span
               >
-                ③ 提问内容
-              </button>
               }<br />&#160; ]<br />}
             </div>
           </div>
@@ -811,15 +900,11 @@ Content-Type: application/json
               >密钥卡片不带引号；JSON 的字段名和文字值卡片自带双引号。</small
             ><button class="primary" id="checkDrag">检查这条 JSON →</button>
           </div>
-          <div
-            id="scenario-drag"
-            class="scenario-window"
-            aria-label="请求对应的模拟聊天窗口"
-          >
+          <div id="scenario-drag" class="scenario-window" aria-label="聊天窗口">
             <div class="scenario-header">
               <span class="window-dots" aria-hidden="true">● ● ●</span
               ><strong>聊天窗口</strong
-              ><span class="simulation-tag">本地模拟 · 预设回答</span>
+              ><span class="simulation-tag">demo-small</span>
             </div>
             <div
               class="scenario-status"
@@ -830,9 +915,6 @@ Content-Type: application/json
             </div>
             <div class="chat-messages" id="chat-messages-drag">
               <p class="chat-empty">发送后，你的消息和模型回复会出现在这里。</p>
-            </div>
-            <div class="stream-note">
-              模拟流式效果用于展示分段接收回答，不会调用真实模型。
             </div>
           </div>
           <div class="response-placeholder" id="dragResponse" hidden></div>
@@ -873,7 +955,7 @@ Content-Type: application/json
           </p>
         </div>
         <ol class="instructions">
-          <li>先在请求头区域填入领到的教学密钥。</li>
+          <li>先在请求头区域填入领到的密钥。</li>
           <li>JSON 的 model 后面填入 demo-small。</li>
           <li>content 后面填入“用一句话解释月食。”，保留英文双引号。</li>
         </ol>
@@ -891,21 +973,38 @@ Content-Type: application/json
             <div>
               <strong>任务三 · 亲手补全 JSON</strong>
               <p>
-                用同一把教学密钥认证，把正文里的两个 __填写__
-                换成模型名和新提问。
+                用同一把密钥认证，把正文里的两个 __填写__ 换成模型名和新提问。
               </p>
             </div>
           </div>
           <div class="transport-editor">
-            <code>POST https://api.example.com/v1/chat/completions</code
-            ><label
-              >认证请求头的 API Key<input
-                id="writeKey"
-                type="text"
-                autocomplete="off"
-                spellcheck="false"
-                placeholder="填领到的教学密钥，应用会加上 Bearer" /></label
-            ><code id="writeHeaderPreview"
+            <code>POST https://api.example.com/v1/chat/completions</code>
+            <div class="field-with-hint">
+              <label
+                >认证请求头的 API Key<input
+                  aria-describedby="field-hint-7"
+                  id="writeKey"
+                  type="text"
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="填领到的密钥，应用会加上 Bearer" /></label
+              ><span class="hint-wrap"
+                ><button
+                  aria-expanded="false"
+                  aria-controls="field-hint-7"
+                  aria-describedby="field-hint-7"
+                  aria-label="填写提示"
+                  type="button"
+                  class="hint-trigger"
+                >
+                  ?</button
+                ><span role="tooltip" id="field-hint-7" class="hint-tooltip"
+                  >返回第 2
+                  步控制台，复制一把状态为“有效”的密钥，再粘贴到这里。</span
+                ></span
+              >
+            </div>
+            <code id="writeHeaderPreview"
               >Authorization: Bearer __填写密钥__</code
             >
             <p class="field-help">
@@ -918,7 +1017,45 @@ Content-Type: application/json
             <span>请求正文</span
             ><button id="formatJson" class="text-button">整理缩进</button>
           </div>
+          <div aria-label="JSON 填空提示" class="json-field-hints">
+            <span class="json-field-hint"
+              >第一个空：模型名
+              <span class="hint-wrap"
+                ><button
+                  aria-expanded="false"
+                  aria-controls="field-hint-8"
+                  aria-describedby="field-hint-8"
+                  aria-label="填写提示"
+                  type="button"
+                  class="hint-trigger"
+                >
+                  ?</button
+                ><span role="tooltip" id="field-hint-8" class="hint-tooltip"
+                  >把第一个 __填写__ 替换为
+                  demo-small，保留两侧的英文双引号。</span
+                ></span
+              ></span
+            ><span class="json-field-hint"
+              >第二个空：提问
+              <span class="hint-wrap"
+                ><button
+                  aria-expanded="false"
+                  aria-controls="field-hint-9"
+                  aria-describedby="field-hint-9"
+                  aria-label="填写提示"
+                  type="button"
+                  class="hint-trigger"
+                >
+                  ?</button
+                ><span role="tooltip" id="field-hint-9" class="hint-tooltip"
+                  >把第二个 __填写__
+                  替换为“用一句话解释月食。”，保留两侧的英文双引号。</span
+                ></span
+              ></span
+            >
+          </div>
           <textarea
+            aria-describedby="field-hint-8 field-hint-9"
             id="jsonEditor"
             class="json-editor"
             rows="13"
@@ -931,17 +1068,17 @@ Content-Type: application/json
             <small
               >先检查认证请求头，再检查 JSON 的双引号、逗号与括号。密钥不写进
               JSON。</small
-            ><button id="checkWrite" class="primary">检查并模拟发送 →</button>
+            ><button id="checkWrite" class="primary">检查并发送 →</button>
           </div>
           <div
             id="scenario-write"
             class="scenario-window"
-            aria-label="请求对应的模拟聊天窗口"
+            aria-label="聊天窗口"
           >
             <div class="scenario-header">
               <span class="window-dots" aria-hidden="true">● ● ●</span
               ><strong>聊天窗口</strong
-              ><span class="simulation-tag">本地模拟 · 预设回答</span>
+              ><span class="simulation-tag">demo-small</span>
             </div>
             <div
               class="scenario-status"
@@ -952,9 +1089,6 @@ Content-Type: application/json
             </div>
             <div class="chat-messages" id="chat-messages-write">
               <p class="chat-empty">发送后，你的消息和模型回复会出现在这里。</p>
-            </div>
-            <div class="stream-note">
-              模拟流式效果用于展示分段接收回答，不会调用真实模型。
             </div>
           </div>
           <div id="writeResponse" class="response-placeholder" hidden></div>
@@ -1031,8 +1165,8 @@ Content-Type: application/json
         <div class="explain-box">
           <strong>知识补充：区分请求与响应。</strong>
           <p>
-            请求是<strong>你交给模型的任务</strong>；响应是<strong>服务返回的结果</strong>。练习中的“200
-            OK”表示模拟请求成功，下面是返回的数据。
+            请求是<strong>发给模型的任务</strong>，响应是<strong>服务返回的结果</strong>。状态码
+            <code>200 OK</code> 表示请求成功。
           </p>
         </div>
         <h3>① 先看返回的数据</h3>
@@ -1067,9 +1201,7 @@ Content-Type: application/json
             >，说明这是模型的回复。它属于响应，不需要放进发送的请求。
           </p>
         </div>
-        <p class="fineprint">
-          这是本课采用的聊天接口格式示例；不同接口的响应结构可能不同。真实调用时以服务商文档为准。
-        </p>
+
         <h3>③ 如果没有成功，先看状态和错误说明</h3>
         <div class="table-scroll">
           <table>
@@ -1248,7 +1380,7 @@ Content-Type: application/json
       <div class="page-controls">
         <button id="prevStep" class="secondary" disabled>← 上一步</button>
         <div>
-          <span id="nextDescription">接下来：模拟申请 API Key</span
+          <span id="nextDescription">接下来：创建 API Key</span
           ><button
             id="nextStep"
             class="primary is-locked"
@@ -1260,9 +1392,7 @@ Content-Type: application/json
           </button>
         </div>
       </div>
-      <p class="book-footer">
-        纯本地模拟 · 不要输入真实密钥 · 应用与服务商均为教学示例
-      </p>
+      <p class="book-footer">按步骤操作，完成每节练习后继续。</p>
     </main>
     <dialog
       id="keyNameDialog"
@@ -1285,19 +1415,32 @@ Content-Type: application/json
         <p id="keyNameHelp">
           请为密钥设置一个便于辨认的名称，例如“手机聊天”或“电脑应用”。名称用于管理，认证时使用的是生成的密钥值。
         </p>
-        <label for="keyName"
-          >密钥名称<input
-            id="keyName"
-            maxlength="40"
-            placeholder="例如：手机聊天"
-            autocomplete="off"
-            autofocus
-            aria-describedby="keyNameError"
-        /></label>
+        <div class="field-with-hint">
+          <label for="keyName"
+            >密钥名称<input
+              id="keyName"
+              maxlength="40"
+              placeholder="例如：手机聊天"
+              autocomplete="off"
+              autofocus
+              aria-describedby="keyNameError field-hint-1" /></label
+          ><span class="hint-wrap"
+            ><button
+              aria-expanded="false"
+              aria-controls="field-hint-1"
+              aria-describedby="field-hint-1"
+              aria-label="填写提示"
+              type="button"
+              class="hint-trigger"
+            >
+              ?</button
+            ><span role="tooltip" id="field-hint-1" class="hint-tooltip"
+              >输入这把密钥将用于的应用或设备名称，例如“手机聊天”，然后点击“创建密钥”。</span
+            ></span
+          >
+        </div>
         <p id="keyNameError" class="dialog-error" role="alert"></p>
-        <p class="field-help">
-          本操作只创建教学凭证，不会连接真实服务或产生费用。
-        </p>
+
         <div class="dialog-actions">
           <button id="cancelKeyName" type="button" class="secondary">
             取消</button

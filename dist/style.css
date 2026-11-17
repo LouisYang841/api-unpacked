@@ -1728,3 +1728,110 @@ button:disabled {
 .page-controls #nextStep:not(:disabled) {
   border: 1px solid transparent;
 }
+.field-with-hint {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px;
+  align-items: end;
+  column-gap: 9px;
+  margin-bottom: 17px;
+}
+.field-with-hint > label {
+  min-width: 0;
+  margin-bottom: 0;
+}
+.field-with-hint > .hint-wrap {
+  margin-bottom: 10px;
+}
+.hint-wrap {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  line-height: 1;
+}
+.hint-trigger {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid #9bb4c4;
+  border-radius: 50%;
+  color: #658497;
+  background: #f7fbfd;
+  font: 600 12px/1 system-ui;
+  cursor: help;
+}
+.hint-trigger:hover,
+.hint-trigger:focus-visible,
+.hint-trigger[aria-expanded='true'] {
+  border-color: #3b82ad;
+  background: #e8f3fa;
+  color: #2a6b93;
+}
+.hint-tooltip {
+  display: none;
+  position: fixed;
+  z-index: 200;
+  max-width: 280px;
+  width: max-content;
+  max-width: min(280px, calc(100vw - 32px));
+  background: #2e4658;
+  color: #fff;
+  font:
+    12px/1.8 'Microsoft YaHei',
+    'PingFang SC',
+    system-ui,
+    sans-serif;
+  border-radius: 7px;
+  padding: 11px 14px;
+  box-shadow: 0 6px 20px #1a35452b;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+  pointer-events: none;
+}
+.hint-trigger:focus-visible + .hint-tooltip,
+.hint-wrap[data-open='true'] > .hint-tooltip {
+  display: block;
+}
+@media (hover: hover) {
+  .hint-wrap:hover > .hint-tooltip {
+    display: block;
+  }
+}
+.hint-wrap[data-dismissed='true'] > .hint-tooltip {
+  display: none;
+}
+.blank-with-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  vertical-align: middle;
+}
+.json-field-hints {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin: 8px 20px 12px;
+  font-size: 11px;
+  color: #6d899c;
+}
+.json-field-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.json-field-hint .hint-trigger {
+  width: 18px;
+  height: 18px;
+  font-size: 11px;
+}
+.console-dialog .field-with-hint {
+  margin: 18px 0;
+}
+.console-dialog .field-with-hint label {
+  margin-top: 0;
+}
+.console-dialog .field-with-hint .hint-wrap {
+  margin-bottom: 12px;
+}

@@ -8,8 +8,7 @@
     const errors = [];
     if (!body || typeof body !== 'object' || Array.isArray(body))
       return ['正文应是用花括号包起来的 JSON 对象。'];
-    if (body.model !== 'demo-small')
-      errors.push('model 用于选择模型；本题应填写教学模型 "demo-small"。');
+    if (body.model !== 'demo-small') errors.push('模型名称应为 "demo-small"。');
     if (!Array.isArray(body.messages))
       return [...errors, 'messages 应是由方括号包起来的消息列表。'];
     if (body.messages.length !== 2)
@@ -68,31 +67,24 @@
   }
   function validateKey(value, validKeys) {
     const errors = [];
-    if (!validKeys?.size)
-      errors.push('请先返回第 2 步，在服务商控制台点击“创建教学密钥”。');
+    if (!validKeys?.size) errors.push('请先在服务商控制台创建 API 密钥。');
     const key = String(value ?? '').trim();
     if (validKeys?.size && !validKeys.has(key))
       errors.push(
         /^Bearer\s|^Authorization:/i.test(key)
-          ? '这里只填密钥本身，不要再加 Bearer 或 Authorization:。'
-          : '这不是当前有效的教学密钥。请从控制台复制任意一把未撤销的密钥；已撤销的密钥和真实密钥不能用于本课。',
+          ? 'API Key 字段只填写密钥值。'
+          : '认证失败：密钥无效或已撤销。请从控制台复制一把有效密钥。',
       );
     return errors;
   }
   function validateConnection(data, validKeys) {
     const errors = validateKey(data.key, validKeys);
     if (normalizeBaseUrl(data.baseUrl) !== 'https://api.example.com/v1')
-      errors.push(
-        '请填写示例服务的 API 地址，而不是官网或控制台网址。本模拟应用会自动整理该服务的域名、基础地址或完整接口地址。',
-      );
+      errors.push('服务地址不正确。请填写 https://api.example.com/v1。');
     if (data.protocol !== 'openai')
-      errors.push(
-        '本示例服务声明支持 OpenAI 兼容格式，请选择它。接口类型由服务商文档决定，不能根据模型名字猜测。',
-      );
+      errors.push('接口类型不匹配。此服务使用 OpenAI 兼容格式。');
     if (data.model !== 'demo-small')
-      errors.push(
-        '本服务提供的模型 ID 是 demo-small，请选择它；其他服务的模型名不能直接拿来调用。',
-      );
+      errors.push('模型不可用，请选择 demo-small。');
     return errors;
   }
   function parseAndValidate(text, prompt = prompts.write) {

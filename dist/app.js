@@ -17,7 +17,7 @@ function feedback(id, errors, success) {
   box.className = 'feedback ' + (errors.length ? 'bad' : 'good');
   if (errors.length) {
     const title = document.createElement('strong');
-    title.textContent = '再检查一下，已经很接近了：';
+    title.textContent = '请检查以下项目：';
     box.append(title);
     const list = document.createElement('ul');
     errors.forEach((e) => {
@@ -73,16 +73,12 @@ function updatePreview(reset = true) {
     'POST ' +
     (endpoint || '__等待填写地址__') +
     '\nAuthorization: Bearer ' +
-    (validKeys.has(key)
-      ? key
-      : key
-        ? '[已隐藏：本课只接收教学密钥]'
-        : '__等待填写密钥__') +
+    (validKeys.has(key) ? key : key ? '••••••••' : '__等待填写密钥__') +
     '\nContent-Type: application/json\n\n' +
     JSON.stringify(uiBody(), null, 2);
   if ($('protocolType').value !== 'openai') {
     $('livePreview').textContent =
-      '所选接口类型与本示例服务不匹配。本服务提供 OpenAI 兼容的 Chat Completions 与 Responses，请按服务商说明选择后再预览。';
+      '接口类型不匹配。此服务使用 OpenAI 兼容格式。';
   }
   if (reset)
     $('uiResponse').textContent =
@@ -101,8 +97,8 @@ $('protocolType').addEventListener('change', () => {
   $('useResponses').disabled = !openai;
   if (!openai) $('useResponses').checked = false;
   $('protocolHelp').textContent = openai
-    ? '本示例服务同时支持 Chat Completions 和 Responses。启用 Responses 前，请确认服务商文档明确支持。'
-    : '本示例服务仅提供 OpenAI 兼容接口。真实使用时，应以你所接服务的接口说明为准。';
+    ? '可用接口：Chat Completions、Responses。'
+    : '此服务使用 OpenAI 兼容格式。';
   updatePreview();
 });
 $('useResponses').addEventListener('change', () => updatePreview());
@@ -110,7 +106,7 @@ $('toggleKey').addEventListener('click', () => {
   const show = $('apiKey').type === 'password';
   $('apiKey').type = show ? 'text' : 'password';
   $('toggleKey').setAttribute('aria-pressed', String(show));
-  $('toggleKey').textContent = show ? '隐藏教学密钥' : '显示教学密钥';
+  $('toggleKey').textContent = show ? '隐藏密钥' : '显示密钥';
 });
 function openConsoleDialog(id) {
   const dialog = $(id);
@@ -214,8 +210,7 @@ $('keyNameForm').addEventListener('submit', (event) => {
       revoked: false,
     });
   } catch {
-    $('keyIssueStatus').textContent =
-      '无法生成教学密钥，请使用支持 Web Crypto 的浏览器访问此 HTTPS 页面。';
+    $('keyIssueStatus').textContent = '密钥创建失败，请更新浏览器后重试。';
     $('keyNameError').textContent = $('keyIssueStatus').textContent;
     return;
   }
@@ -226,7 +221,7 @@ $('keyNameForm').addEventListener('submit', (event) => {
   $('createKey').disabled = false;
   $('createKey').textContent = '＋ 创建 API 密钥';
   $('keyIssueStatus').textContent =
-    '已新增一把随机教学密钥。之前未撤销的密钥仍然有效；下面可切换查看、复制或单独撤销。刷新页面后全部失效。';
+    '密钥已创建。请复制密钥值，然后配置应用连接。';
   $('keyReceipt').classList.remove('key-arrival');
   void $('keyReceipt').offsetWidth;
   $('keyReceipt').classList.add('key-arrival');
@@ -236,17 +231,17 @@ $('keyNameForm').addEventListener('submit', (event) => {
 });
 $('copyKey').addEventListener('click', async () => {
   if (!activeKey) {
-    $('keyIssueStatus').textContent = '请先创建一把教学密钥。';
+    $('keyIssueStatus').textContent = '请先创建一把密钥。';
     return;
   }
   try {
     if (!window.navigator.clipboard?.writeText) throw new Error('unavailable');
     await window.navigator.clipboard.writeText(activeKey);
-    $('keyIssueStatus').textContent = '已复制本次生成的教学密钥。';
+    $('keyIssueStatus').textContent = '密钥已复制。';
   } catch {
     $('issuedKey').focus();
     $('issuedKey').select?.();
-    $('keyIssueStatus').textContent = '可以手动复制上方刚生成的教学密钥。';
+    $('keyIssueStatus').textContent = '请选中上方密钥值并复制。';
   }
 });
 $('revokeKey').addEventListener('click', () => requestRevocation(activeKey));
@@ -287,13 +282,12 @@ function renderKeyList() {
     if (!record.revoked) {
       const select = document.createElement('button');
       select.className = 'text-button';
-      select.textContent = '查看 / 用于示范';
+      select.textContent = '查看密钥';
       select.type = 'button';
       select.addEventListener('click', () => {
         activeKey = record.key;
         syncTeachingKey();
-        $('keyIssueStatus').textContent =
-          '已切换查看 ' + record.label + '。其他未撤销的密钥仍然有效。';
+        $('keyIssueStatus').textContent = '当前密钥：' + record.label;
       });
       const revoke = document.createElement('button');
       revoke.type = 'button';
@@ -328,10 +322,7 @@ function revokeTeachingKey(key) {
     setConnectionNotice('已保存配置的密钥被撤销，请更换密钥并重新保存。', true);
   }
   updateProgress();
-  $('keyIssueStatus').textContent =
-    '已撤销所选密钥，其他 ' +
-    validKeys.size +
-    ' 把密钥继续有效。已填入的其他有效密钥无需更换。';
+  $('keyIssueStatus').textContent = '密钥已撤销。';
 }
 const answers = {
   rainbow: '彩虹是阳光进入水滴后发生折射、反射和色散，分出不同颜色而形成的。',
@@ -348,11 +339,11 @@ function showResponse(id, answer) {
   el.hidden = false;
   el.replaceChildren();
   const title = document.createElement('strong');
-  title.textContent = '200 OK · 模拟响应（预设示例，并未调用模型）';
+  title.textContent = '200 OK';
 
   const raw = document.createElement('details');
   const summary = document.createElement('summary');
-  summary.textContent = '查看原始响应 JSON（后面会逐步讲解）';
+  summary.textContent = '查看响应 JSON';
   const pre = document.createElement('pre');
   pre.textContent = JSON.stringify(
     id === 'uiResponse' && savedConnection?.useResponses
@@ -372,7 +363,7 @@ function showResponse(id, answer) {
   const note = document.createElement('span');
   note.textContent =
     id === 'uiResponse' && savedConnection?.useResponses
-      ? '此 Responses 文本示例的回答位于 output[0].content[0].text；实际 output 还可能包含其他类型。'
+      ? '这条回复的文字位于 output[0].content[0].text。'
       : '回答在 choices[0].message.content 中。';
   raw.append(summary, pre, note);
   el.append(title, raw);
@@ -447,8 +438,7 @@ $('fetchModels').addEventListener('click', () => {
     makeOption('demo-small', 'demo-small'),
   );
   $('connectionModel').disabled = false;
-  $('modelStatus').textContent =
-    '已获取 1 个可用模型（模拟）。请选择 demo-small。';
+  $('modelStatus').textContent = '已获取 1 个模型，请选择 demo-small。';
   setConnectionNotice('模型列表已更新。选择模型后，点击“保存配置”。');
 });
 $('requestForm').addEventListener('submit', (e) => {
@@ -466,7 +456,7 @@ $('requestForm').addEventListener('submit', (e) => {
   connectionTested = false;
   $('sendChat').disabled = true;
   $('testConnection').disabled = false;
-  setConnectionNotice('配置已保存（仅本次页面有效）。下一步：点击“检测连接”。');
+  setConnectionNotice('配置已保存。请检测连接。');
 });
 $('providerEnabled').addEventListener('change', () => {
   connectionTested = false;
@@ -495,7 +485,7 @@ $('testConnection').addEventListener('click', () => {
   }
   connectionTested = true;
   $('sendChat').disabled = false;
-  setConnectionNotice('连接检测通过（模拟）。请到下方聊天窗口点击“发送”。');
+  setConnectionNotice('连接成功。现在可以发送消息。');
   $('scenario-status-ui').textContent =
     '服务商已连接 · demo-small 已选中 · 等待发送消息';
   celebrate($('connectionStatus'));
@@ -521,7 +511,7 @@ const cards = [
   { id: 'assistant', text: '"assistant"' },
   { id: 'content', text: '"用一句话解释彩虹。"' },
   { id: 'messages', text: '"messages"' },
-  { id: 'auth', text: '先领取教学密钥' },
+  { id: 'auth', text: '先领取密钥' },
   { id: 'model', text: '"model"' },
 ];
 let slots = { key: null, auth: null, content: null },
@@ -535,7 +525,7 @@ function syncTeachingKey() {
   const card = cards.find((c) => c.id === 'auth');
   if (!slots.auth || !validKeys.has(card.text)) {
     if (!validKeys.has(card.text)) slots.auth = null;
-    const next = activeKey || '先领取教学密钥';
+    const next = activeKey || '先领取密钥';
     if (card.text !== next) {
       card.text = next;
       renderCards();
@@ -675,8 +665,7 @@ $('formatJson').addEventListener('click', () => {
     );
     const el = $('feedback-write');
     el.className = 'feedback hint';
-    el.textContent =
-      '缩进已整理。格式正确不代表内容符合任务，还可以点击“检查并模拟发送”。';
+    el.textContent = '格式已整理。点击“检查并发送”查看结果。';
   } catch (e) {
     feedback(
       'write',
@@ -688,11 +677,7 @@ $('formatJson').addEventListener('click', () => {
 $('checkWrite').addEventListener('click', () => {
   const result = Lesson.parseAndValidate($('jsonEditor').value);
   result.errors.unshift(...Lesson.validateKey($('writeKey').value, validKeys));
-  feedback(
-    'write',
-    result.errors,
-    '补全正确！教学密钥在请求头中通过认证，模型和新问题写在 JSON 中。你已把同一把密钥用于三种请求配置方式。',
-  );
+  feedback('write', result.errors, '填写正确。请求已发送，请观察返回的回答。');
   if (!result.errors.length) showResponse('writeResponse', answers.eclipse);
   else {
     $('writeResponse').hidden = true;
@@ -700,8 +685,8 @@ $('checkWrite').addEventListener('click', () => {
   }
 });
 const hints = {
-  ui: '先到第 2 步模拟创建密钥。Base URL 填 https://api.example.com/v1；API Key 填控制台本次生成的密钥；模型选 demo-small。',
-  drag: '① 控制台本次生成的教学密钥放在 Bearer 后面；② 模型字段名是 "model"；③ 放整句彩虹提问。密钥不属于 JSON。',
+  ui: '先到第 2 步创建密钥。Base URL 填 https://api.example.com/v1；API Key 填控制台本次生成的密钥；模型选 demo-small。',
+  drag: '① 控制台本次生成的密钥放在 Bearer 后面；② 模型字段名是 "model"；③ 放整句彩虹提问。密钥不属于 JSON。',
   write:
     '上方 Key 填控制台本次生成的密钥；下面 JSON 两个占位符按顺序替换成 demo-small、用一句话解释月食。保留双引号。',
 };
@@ -710,11 +695,7 @@ $('writeKey').addEventListener('input', () => {
   const value = $('writeKey').value.trim();
   $('writeHeaderPreview').textContent =
     'Authorization: Bearer ' +
-    (validKeys.has(value)
-      ? value
-      : value
-        ? '[只接收教学密钥]'
-        : '__填写密钥__');
+    (validKeys.has(value) ? value : value ? '••••••••' : '__填写密钥__');
   $('writeResponse').hidden = true;
 });
 document.querySelectorAll('[data-hint]').forEach((b) =>
@@ -747,7 +728,7 @@ document.querySelectorAll('[data-reset]').forEach((b) =>
         (id) => ($(id).value = ''),
       );
       $('apiKey').type = 'password';
-      $('toggleKey').textContent = '显示教学密钥';
+      $('toggleKey').textContent = '显示密钥';
       $('toggleKey').setAttribute('aria-pressed', 'false');
       updatePreview();
     }
@@ -769,7 +750,7 @@ document.querySelectorAll('[data-reset]').forEach((b) =>
 
 const chapterNames = [
   '先分清应用与服务商',
-  '模拟申请 API Key',
+  '创建 API Key',
   '练习一：连接第三方应用',
   '应用怎样组成请求',
   '巩固练习：拖拽请求',
@@ -778,7 +759,7 @@ const chapterNames = [
   '迁移到真实应用',
 ];
 const nextLabels = [
-  '下一步：领取教学密钥 →',
+  '下一步：领取密钥 →',
   '下一步：连接第三方应用 →',
   '继续理解：应用怎样发请求 →',
   '巩固练习：用卡片拼请求 →',
@@ -815,6 +796,7 @@ function goToChapter(index, moveFocus = true) {
     history.replaceState(null, '', '#step-' + currentChapter);
     return;
   }
+  closeFieldHints();
   currentChapter = index;
   if (index !== 0) stopDemo();
   visited.add(index);
@@ -929,13 +911,13 @@ function runScenario(id, prompt, answer) {
   });
   const state = { timer: null, wait: null, key: requestKeyFor(id) };
   scenarioStates.set(id, state);
-  status.textContent = '请求已发出 → 服务验证教学密钥 → 等待首段回答';
+  status.textContent = '请求已发送 → 验证密钥 → 等待回复';
   status.classList.add('working');
   function finish() {
     window.clearInterval(state.timer);
     reply.textContent = answer;
     reply.classList.remove('streaming');
-    status.textContent = '接收完成 · 密钥通过教学验证 · 200 OK（模拟）';
+    status.textContent = '回复完成 · 200 OK';
     status.className = 'scenario-status complete';
     scenarioStates.delete(id);
     celebrate($('scenario-' + id));
@@ -1106,6 +1088,57 @@ document.querySelectorAll('button[data-question]').forEach((button) =>
     }
   }),
 );
+document.querySelectorAll('.hint-trigger').forEach((button) => {
+  button.addEventListener('mouseenter', () => positionFieldHint(button));
+  button.addEventListener('focus', () => positionFieldHint(button));
+  button.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const wasOpen = button.getAttribute('aria-expanded') === 'true';
+    closeFieldHints();
+    if (!wasOpen) {
+      button.setAttribute('aria-expanded', 'true');
+      delete button.parentElement.dataset.dismissed;
+      button.parentElement.dataset.open = 'true';
+      positionFieldHint(button);
+    }
+  });
+  button.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeFieldHints();
+      button.blur();
+    }
+  });
+});
+function positionFieldHint(button) {
+  delete button.parentElement.dataset.dismissed;
+  const tip = $(button.getAttribute('aria-controls'));
+  const rect = button.getBoundingClientRect();
+  const width = Math.min(280, window.innerWidth - 32);
+  tip.style.width = width + 'px';
+  tip.style.left =
+    Math.max(16, Math.min(rect.right - width, window.innerWidth - width - 16)) +
+    'px';
+  const height = tip.offsetHeight || 100;
+  const below = rect.bottom + 8;
+  tip.style.top =
+    (below + height <= window.innerHeight - 12
+      ? below
+      : Math.max(12, rect.top - height - 8)) + 'px';
+}
+function closeFieldHints() {
+  document.querySelectorAll('.hint-trigger').forEach((button) => {
+    button.setAttribute('aria-expanded', 'false');
+    delete button.parentElement.dataset.open;
+    button.parentElement.dataset.dismissed = 'true';
+  });
+}
+document.addEventListener('click', (event) => {
+  if (!event.target.closest('.hint-wrap')) closeFieldHints();
+});
+document.addEventListener('scroll', closeFieldHints, true);
+window.addEventListener('resize', closeFieldHints);
 const initial = /^#step-([0-7])$/.exec(location.hash);
 const requestedInitial = initial ? Number(initial[1]) : 0;
 goToChapter(firstIncompleteBefore(requestedInitial) ?? requestedInitial, false);
