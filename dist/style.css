@@ -1835,3 +1835,44 @@ button:disabled {
 .console-dialog .field-with-hint .hint-wrap {
   margin-bottom: 12px;
 }
+.requirement-target {
+  transition:
+    box-shadow 0.2s,
+    border-color 0.2s;
+}
+.requirement-target.is-complete {
+  border-color: #63a77c;
+  box-shadow: 0 0 0 2px #77b68f44;
+}
+.requirement-target.needs-attention {
+  border-color: #c5544b !important;
+  box-shadow: 0 0 0 3px #d26c6555;
+  animation: question-nudge 0.3s ease-out;
+}
+.question-field-missing {
+  border-color: #c5544b !important;
+  box-shadow: 0 0 0 2px #dc9a9444 !important;
+}
+.requirement-target:focus {
+  outline: none;
+}
+@keyframes question-nudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  30% {
+    transform: translateX(-3px);
+  }
+  65% {
+    transform: translateX(3px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .requirement-target {
+    transition: none;
+  }
+  .requirement-target.needs-attention {
+    animation: none;
+  }
+}

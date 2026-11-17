@@ -1,8 +1,30 @@
 const $ = (id) => document.getElementById(id);
 const completed = new Set();
+const completedTasks = new Set();
+const taskIds = [
+  'api-basics',
+  'key-management',
+  'app-connection',
+  'request-structure',
+  'request-cards',
+  'request-json',
+  'troubleshooting',
+];
+const requirementTaskMap = {
+  'concept-api': 'api-basics',
+  'key-created': 'key-management',
+  'exercise-ui': 'app-connection',
+  'concept-request': 'request-structure',
+  'exercise-drag': 'request-cards',
+  'exercise-write': 'request-json',
+  'concept-errors': 'troubleshooting',
+};
+const learningStorageKey = 'api-unpacked-learning-v1';
 const answeredQuestions = new Set();
 const rewardedQuestions = new Set();
 let activeKey = null;
+let revealedKey = null;
+let practiceKeysReady = false;
 const validKeys = new Set();
 const keyRecords = [];
 const completedKeys = new Map();
@@ -80,6 +102,7 @@ function updatePreview(reset = true) {
     $('livePreview').textContent =
       '接口类型不匹配。此服务使用 OpenAI 兼容格式。';
   }
+  syncPracticeKey();
   if (reset)
     $('uiResponse').textContent =
       '配置更新了。点击检测连接，观察地址、密钥与模型是否匹配。';
@@ -122,6 +145,7 @@ function closeConsoleDialog(id) {
   if (typeof dialog.close === 'function') dialog.close();
   else dialog.removeAttribute('open');
   dialog.classList.remove('dialog-fallback');
+  if (id === 'keyRevealDialog') eraseKeyReveal();
 }
 $('createKey').addEventListener('click', () => {
   $('keyName').value = '';
@@ -140,10 +164,10 @@ $('createKey').addEventListener('click', () => {
   $(id).addEventListener('click', () => {
     pendingRevocation = null;
     closeConsoleDialog('revokeDialog');
-    $('revokeKey').focus();
+    $('createKey').focus();
   }),
 );
-['keyNameDialog', 'revokeDialog'].forEach((id) => {
+['keyNameDialog', 'keyRevealDialog', 'revokeDialog'].forEach((id) => {
   $(id).addEventListener('cancel', (e) => {
     e.preventDefault();
     closeConsoleDialog(id);
@@ -215,9 +239,13 @@ $('keyNameForm').addEventListener('submit', (event) => {
     return;
   }
   closeConsoleDialog('keyNameDialog');
-  $('issuedKey').value = activeKey;
+  revealedKey = activeKey;
+  $('issuedKey').value = revealedKey;
+  $('issuedKeyLabel').textContent = label;
+  $('keyCopyStatus').textContent = '';
   syncTeachingKey();
   $('keyReceipt').hidden = false;
+  openConsoleDialog('keyRevealDialog');
   $('createKey').disabled = false;
   $('createKey').textContent = '＋ 创建 API 密钥';
   $('keyIssueStatus').textContent =
@@ -230,46 +258,49 @@ $('keyNameForm').addEventListener('submit', (event) => {
   $('issuedKey').focus();
 });
 $('copyKey').addEventListener('click', async () => {
-  if (!activeKey) {
-    $('keyIssueStatus').textContent = '请先创建一把密钥。';
-    return;
-  }
+  if (!revealedKey || !$('keyRevealDialog').hasAttribute('open')) return;
   try {
     if (!window.navigator.clipboard?.writeText) throw new Error('unavailable');
-    await window.navigator.clipboard.writeText(activeKey);
-    $('keyIssueStatus').textContent = '密钥已复制。';
+    await window.navigator.clipboard.writeText(revealedKey);
+    $('keyCopyStatus').textContent = '密钥已复制。';
   } catch {
     $('issuedKey').focus();
     $('issuedKey').select?.();
-    $('keyIssueStatus').textContent = '请选中上方密钥值并复制。';
+    $('keyCopyStatus').textContent = '请选中上方密钥值并复制。';
   }
 });
-$('revokeKey').addEventListener('click', () => requestRevocation(activeKey));
+function eraseKeyReveal() {
+  revealedKey = null;
+  $('issuedKey').value = '';
+  $('issuedKey').setAttribute('value', '');
+  $('issuedKeyLabel').textContent = '';
+  $('keyCopyStatus').textContent = '';
+  $('keyReceipt').hidden = true;
+}
+['closeKeyReveal', 'finishKeyReveal'].forEach((id) =>
+  $(id).addEventListener('click', () => {
+    closeConsoleDialog('keyRevealDialog');
+    $('createKey').focus();
+  }),
+);
+$('keyRevealDialog').addEventListener('close', eraseKeyReveal);
 function requestKeyFor(id) {
   return id === 'ui'
     ? $('apiKey').value.trim()
     : id === 'write'
       ? $('writeKey').value.trim()
-      : cards.find((c) => c.id === 'auth').text;
+      : cards.find((c) => c.id === slots.auth)?.text || '';
 }
 function renderKeyList() {
   const list = $('keyList');
   list.replaceChildren();
   keyRecords.forEach((record) => {
     const li = document.createElement('li');
-    li.dataset.key = record.key;
-    li.className =
-      'key-record' +
-      (record.revoked ? ' revoked' : '') +
-      (record.key === activeKey ? ' current' : '');
+    li.dataset.keyId = 'key-' + (keyRecords.indexOf(record) + 1);
+    li.className = 'key-record' + (record.revoked ? ' revoked' : '');
     const title = document.createElement('strong');
     title.textContent =
-      record.label +
-      (record.revoked
-        ? ' · 已撤销'
-        : record.key === activeKey
-          ? ' · 当前查看'
-          : ' · 有效');
+      record.label + (record.revoked ? ' · 已撤销' : ' · 有效');
     const code = document.createElement('code');
     code.textContent =
       record.key.slice(0, 9) + '••••••••' + record.key.slice(-4);
@@ -280,21 +311,12 @@ function renderKeyList() {
       new Date(record.createdAt).toLocaleString('zh-CN', { hour12: false });
     li.append(title, code, created);
     if (!record.revoked) {
-      const select = document.createElement('button');
-      select.className = 'text-button';
-      select.textContent = '查看密钥';
-      select.type = 'button';
-      select.addEventListener('click', () => {
-        activeKey = record.key;
-        syncTeachingKey();
-        $('keyIssueStatus').textContent = '当前密钥：' + record.label;
-      });
       const revoke = document.createElement('button');
       revoke.type = 'button';
       revoke.className = 'text-button';
       revoke.textContent = '撤销这一把';
       revoke.addEventListener('click', () => requestRevocation(record.key));
-      li.append(select, revoke);
+      li.append(revoke);
     }
     list.append(li);
   });
@@ -308,7 +330,6 @@ function revokeTeachingKey(key) {
   if (activeKey === key) activeKey = [...validKeys].at(-1) || null;
   ['ui', 'drag', 'write'].forEach((id) => {
     if (completedKeys.get(id) === key || scenarioStates.get(id)?.key === key) {
-      completed.delete(id);
       completedKeys.delete(id);
       stopScenario(id, '本次请求使用的密钥已撤销，请换一把有效密钥。');
       $('feedback-' + id).replaceChildren();
@@ -318,7 +339,6 @@ function revokeTeachingKey(key) {
   syncTeachingKey();
   if (savedConnection?.key === key) {
     connectionTested = false;
-    $('sendChat').disabled = true;
     setConnectionNotice('已保存配置的密钥被撤销，请更换密钥并重新保存。', true);
   }
   updateProgress();
@@ -346,7 +366,7 @@ function showResponse(id, answer) {
   summary.textContent = '查看响应 JSON';
   const pre = document.createElement('pre');
   pre.textContent = JSON.stringify(
-    id === 'uiResponse' && savedConnection?.useResponses
+    id === 'uiResponse' && $('useResponses').checked
       ? {
           output: [
             {
@@ -362,7 +382,7 @@ function showResponse(id, answer) {
   );
   const note = document.createElement('span');
   note.textContent =
-    id === 'uiResponse' && savedConnection?.useResponses
+    id === 'uiResponse' && $('useResponses').checked
       ? '这条回复的文字位于 output[0].content[0].text。'
       : '回答在 choices[0].message.content 中。';
   raw.append(summary, pre, note);
@@ -400,7 +420,6 @@ function setConnectionNotice(message, bad = false) {
 }
 function invalidateConnection() {
   connectionTested = false;
-  $('sendChat').disabled = true;
   $('testConnection').disabled = true;
   const values = connectionValues();
   if (
@@ -454,13 +473,11 @@ $('requestForm').addEventListener('submit', (e) => {
   }
   savedConnection = { ...values };
   connectionTested = false;
-  $('sendChat').disabled = true;
   $('testConnection').disabled = false;
   setConnectionNotice('配置已保存。请检测连接。');
 });
 $('providerEnabled').addEventListener('change', () => {
   connectionTested = false;
-  $('sendChat').disabled = true;
   $('testConnection').disabled = !savedConnection;
   stopScenario('ui');
   setConnectionNotice(
@@ -478,63 +495,59 @@ $('testConnection').addEventListener('click', () => {
   if (!$('providerEnabled').checked) errors.push('请先启用此服务商。');
   if (errors.length) {
     connectionTested = false;
-    $('sendChat').disabled = true;
     setConnectionNotice(errors.join(' '), true);
     scenarioError('ui', errors);
     return;
   }
   connectionTested = true;
-  $('sendChat').disabled = false;
+  feedback('ui', [], '连接成功，配置练习已完成。');
   setConnectionNotice('连接成功。现在可以发送消息。');
   $('scenario-status-ui').textContent =
     '服务商已连接 · demo-small 已选中 · 等待发送消息';
   celebrate($('connectionStatus'));
 });
-$('chatForm').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const errors = savedConnection
-    ? Lesson.validateConnection(savedConnection, validKeys)
-    : ['请先保存服务配置。'];
-  if (!connectionTested || !sameConnection(savedConnection, connectionValues()))
-    errors.push('请先保存当前配置并完成连接检测。');
+$('chatForm').addEventListener('submit', (event) => {
+  event.preventDefault();
+  const errors = Lesson.validateConnection(connectionValues(), validKeys);
   if (!$('providerEnabled').checked)
-    errors.push('服务商已停用，请先启用并重新检测。');
-  feedback(
-    'ui',
-    errors,
-    '检查结果：用户消息已提交，密钥验证通过。请观察聊天窗口中逐段显示的模型回答。',
-  );
-  if (!errors.length) showResponse('uiResponse', answers.rainbow);
-  else scenarioError('ui', errors);
+    errors.unshift('服务商已停用，请先启用服务。');
+  if (errors.length) {
+    scenarioError('ui', errors);
+    return;
+  }
+  showResponse('uiResponse', answers.rainbow);
 });
+['drag', 'write'].forEach((id) =>
+  $('scenarioForm-' + id).addEventListener('submit', (event) => {
+    event.preventDefault();
+    $(id === 'drag' ? 'checkDrag' : 'checkWrite').click();
+  }),
+);
 const cards = [
   { id: 'assistant', text: '"assistant"' },
   { id: 'content', text: '"用一句话解释彩虹。"' },
   { id: 'messages', text: '"messages"' },
-  { id: 'auth', text: '先领取密钥' },
+  { id: 'auth', text: '先在连接设置中填写密钥' },
   { id: 'model', text: '"model"' },
 ];
 let slots = { key: null, auth: null, content: null },
   selected = null;
-function syncTeachingKey() {
-  $('issuedKey').value = activeKey || '';
-  $('issuedKeyLabel').textContent = activeKey
-    ? '已创建 · ' + keyRecords.find((r) => r.key === activeKey).label
-    : '尚未创建密钥';
-  $('keyReceipt').hidden = !activeKey;
+function syncPracticeKey() {
+  if (!practiceKeysReady) return;
+  const entered = $('apiKey').value.trim(),
+    key = validKeys.has(entered) ? entered : null;
   const card = cards.find((c) => c.id === 'auth');
-  if (!slots.auth || !validKeys.has(card.text)) {
-    if (!validKeys.has(card.text)) slots.auth = null;
-    const next = activeKey || '先领取密钥';
-    if (card.text !== next) {
-      card.text = next;
-      renderCards();
-    }
+  if (slots.auth && validKeys.has(card.text)) return;
+  if (!validKeys.has(card.text)) slots.auth = null;
+  const next = key || '先在连接设置中填写密钥';
+  if (card.text !== next) {
+    card.text = next;
+    renderCards();
   }
-  document
-    .querySelectorAll('[data-issued-key]')
-    .forEach((el) => (el.textContent = activeKey || 'demo-key-…（待领取）'));
+}
+function syncTeachingKey() {
   renderKeyList();
+  syncPracticeKey();
   updatePreview(false);
 }
 const slotNames = { auth: '① 密钥', key: '② 字段名', content: '③ 提问内容' };
@@ -552,7 +565,7 @@ function renderCards() {
       const b = document.createElement('button');
       b.className = 'card' + (selected === c.id ? ' selected' : '');
       b.textContent = c.text;
-      b.disabled = c.id === 'auth' && !activeKey;
+      b.disabled = c.id === 'auth' && !validKeys.has(c.text);
       b.draggable = !b.disabled;
       b.dataset.card = c.id;
       b.setAttribute('aria-pressed', String(selected === c.id));
@@ -574,7 +587,13 @@ function renderCards() {
   document.querySelectorAll('[data-slot]').forEach((b) => {
     const c = cards.find((x) => x.id === slots[b.dataset.slot]);
     b.textContent = c ? c.text : slotNames[b.dataset.slot];
-    b.classList.toggle('filled', !!c);
+    const expected = { auth: 'auth', key: 'model', content: 'content' };
+    b.classList.toggle(
+      'filled',
+      !!c &&
+        slots[b.dataset.slot] === expected[b.dataset.slot] &&
+        (b.dataset.slot !== 'auth' || validKeys.has(c.text)),
+    );
     b.setAttribute(
       'aria-label',
       slotNames[b.dataset.slot] +
@@ -710,6 +729,11 @@ document.querySelectorAll('[data-reset]').forEach((b) =>
     const id = b.dataset.reset;
     stopScenario(id);
     completed.delete(id);
+    completedTasks.delete(
+      { ui: 'app-connection', drag: 'request-cards', write: 'request-json' }[
+        id
+      ],
+    );
     completedKeys.delete(id);
     updateProgress();
     $('feedback-' + id).replaceChildren();
@@ -790,9 +814,9 @@ function goToChapter(index, moveFocus = true) {
     return;
   const blocked = firstIncompleteBefore(index);
   if (index > currentChapter && blocked !== null) {
+    if (blocked !== currentChapter) goToChapter(blocked, moveFocus);
     refreshLessonGates();
-    $('pageRequirement').textContent =
-      '请先完成第 ' + (blocked + 1) + ' 步的全部练习，再继续。';
+    highlightUnfinishedQuestions(blocked);
     history.replaceState(null, '', '#step-' + currentChapter);
     return;
   }
@@ -884,12 +908,79 @@ function stopScenario(id, message = '等待你完成请求设置。') {
 }
 function scenarioError(id, errors) {
   stopScenario(id);
-  const status = $('scenario-status-' + id);
-  status.classList.add('failed');
-  status.textContent = '配置检查未通过，尚未发送请求。';
-  const bubble = document.createElement('p');
+  let status = 400,
+    label = '400 Bad Request',
+    type = 'invalid_request_error',
+    code = 'invalid_request',
+    message = errors[0] || '请检查请求内容。';
+  const key = requestKeyFor(id);
+  if (id === 'ui' && !$('providerEnabled').checked) {
+    status = null;
+    label = '服务商未启用';
+    type = 'configuration_error';
+    code = 'provider_disabled';
+    message = '请在设置中启用此服务商。';
+  } else if (id === 'ui' && !$('baseUrl').value.trim()) {
+    status = null;
+    label = '连接失败';
+    type = 'connection_error';
+    code = 'missing_api_address';
+    message = '尚未设置 API 地址。';
+  } else if (
+    id === 'ui' &&
+    Lesson.normalizeBaseUrl($('baseUrl').value) !== 'https://api.example.com/v1'
+  ) {
+    status = null;
+    label = '连接失败';
+    type = 'connection_error';
+    code = 'connection_failed';
+    message = '无法连接到该服务地址，请检查连接设置。';
+  } else if (!validKeys.has(key)) {
+    status = 401;
+    label = '401 Unauthorized';
+    type = 'authentication_error';
+    code = key ? 'invalid_api_key' : 'missing_api_key';
+    message = key ? 'API Key 无效或已撤销。' : '未提供 API Key。';
+  } else if (id === 'ui' && $('protocolType').value !== 'openai') {
+    code = 'incompatible_protocol';
+    message = '接口类型不匹配，此服务使用 OpenAI 兼容格式。';
+  } else if (id === 'ui' && !$('connectionModel').value) {
+    code = 'missing_model';
+    message = '请先选择模型。';
+  } else if (id === 'ui' && $('connectionModel').value !== 'demo-small') {
+    status = 404;
+    label = '404 Not Found';
+    code = 'model_not_found';
+    message = '未找到所选模型。';
+  } else if (id === 'write') {
+    try {
+      const body = JSON.parse($('jsonEditor').value);
+      if (
+        body &&
+        typeof body === 'object' &&
+        body.model &&
+        body.model !== 'demo-small'
+      ) {
+        status = 404;
+        label = '404 Not Found';
+        code = 'model_not_found';
+        message = '未找到所选模型。';
+      }
+    } catch {
+      code = 'invalid_json';
+      message = '请求正文不是有效的 JSON。';
+    }
+  }
+  const state = $('scenario-status-' + id);
+  state.classList.add('failed');
+  state.textContent = label;
+  const bubble = document.createElement('div');
   bubble.className = 'chat-error';
-  bubble.textContent = errors[0] || '请检查连接设置。';
+  const text = document.createElement('p');
+  text.textContent = message;
+  const pre = document.createElement('pre');
+  pre.textContent = JSON.stringify({ error: { message, type, code } }, null, 2);
+  bubble.append(text, pre);
   $('chat-messages-' + id).replaceChildren(bubble);
 }
 function runScenario(id, prompt, answer) {
@@ -1006,14 +1097,15 @@ document.addEventListener('visibilitychange', () => {
 const requirements = {
   0: [['concept-api', '完成 API 概念选择题']],
   1: [['key-created', '命名并创建至少一把有效密钥']],
-  2: [['exercise-ui', '完成保存、检测并发送聊天消息']],
+  2: [['exercise-ui', '保存配置并检测连接']],
   3: [['concept-request', '答对请求组成选择题']],
-  4: [['exercise-drag', '填对请求头与 JSON 卡片']],
-  5: [['exercise-write', '填对认证密钥与 JSON']],
+  4: [['exercise-drag', '检查并通过请求头与 JSON 卡片练习']],
+  5: [['exercise-write', '检查并通过 JSON 练习']],
   6: [['concept-errors', '答对认证故障选择题']],
   7: [],
 };
 function requirementDone(id) {
+  if (completedTasks.has(requirementTaskMap[id])) return true;
   if (id === 'key-created') return validKeys.size > 0;
   if (id.startsWith('exercise-')) return completed.has(id.slice(9));
   return answeredQuestions.has(id);
@@ -1025,19 +1117,18 @@ function firstIncompleteBefore(index) {
   return null;
 }
 function refreshLessonGates() {
+  for (const [id, task] of Object.entries(requirementTaskMap))
+    if (requirementDone(id)) completedTasks.add(task);
   const items = requirements[currentChapter],
     pending = items.filter(([id]) => !requirementDone(id));
   const earlier = firstIncompleteBefore(currentChapter);
-  const locked = pending.length > 0 || earlier !== null;
   const next = $('nextStep');
-  next.disabled = locked;
-  next.toggleAttribute('disabled', locked);
-  next.setAttribute('aria-disabled', String(locked));
+  next.disabled = false;
+  next.removeAttribute('disabled');
+  next.setAttribute('aria-disabled', 'false');
   next.setAttribute('aria-describedby', 'pageRequirement');
-  next.classList.toggle('is-locked', locked);
-  next.textContent = locked
-    ? '完成练习后继续 →'
-    : nextLabels[currentChapter] || '';
+  next.classList.remove('is-locked');
+  next.textContent = nextLabels[currentChapter] || '';
   $('pageRequirement').textContent =
     earlier !== null
       ? '第 ' + (earlier + 1) + ' 步还有未完成的练习，请先返回完成。'
@@ -1046,6 +1137,7 @@ function refreshLessonGates() {
         : items.length
           ? '本页练习全部完成，可以继续。'
           : '本页没有待答题目，可以继续学习。';
+  updateQuestionMarkers();
   $('pageRequirement').classList.toggle(
     'requirements-complete',
     pending.length === 0 && earlier === null,
@@ -1058,7 +1150,104 @@ function refreshLessonGates() {
     button.setAttribute('aria-disabled', String(locked));
     button.title = locked ? '请先完成前面各页的练习。' : '';
   });
+  persistLearningState();
 }
+const requirementTargets = {
+  'concept-api': '[data-question="concept-api"].quick-check',
+  'key-created': '.provider-console',
+  'exercise-ui': '#panel-ui',
+  'concept-request': '[data-question="concept-request"].quick-check',
+  'exercise-drag': '#panel-drag',
+  'exercise-write': '#panel-write',
+  'concept-errors': '[data-question="concept-errors"].quick-check',
+};
+function updateQuestionMarkers() {
+  for (const [id, selector] of Object.entries(requirementTargets)) {
+    const target = document.querySelector(selector),
+      done = requirementDone(id);
+    if (!target) continue;
+    target.classList.add('requirement-target');
+    target.classList.toggle('is-complete', done);
+    if (done) {
+      target.classList.remove('needs-attention');
+      target
+        .querySelectorAll('.question-field-missing')
+        .forEach((node) => node.classList.remove('question-field-missing'));
+    }
+    let state = target.querySelector('.completion-state');
+    if (!state) {
+      state = document.createElement('span');
+      state.className = 'completion-state sr-only';
+      target.append(state);
+    }
+    state.textContent = done ? '本题已完成' : '本题待完成';
+  }
+}
+function highlightUnfinishedQuestions(index) {
+  const pending = requirements[index].filter(([id]) => !requirementDone(id));
+  let first = null;
+  pending.forEach(([id]) => {
+    const target = document.querySelector(requirementTargets[id]);
+    if (!target) return;
+    target.classList.remove('needs-attention');
+    void target.offsetWidth;
+    target.classList.add('needs-attention');
+    first ??= target;
+  });
+  if (index === 2) {
+    const values = connectionValues();
+    const checks = [
+      [
+        'baseUrl',
+        Lesson.normalizeBaseUrl(values.baseUrl) ===
+          'https://api.example.com/v1',
+      ],
+      ['apiKey', validKeys.has(values.key)],
+      ['protocolType', values.protocol === 'openai'],
+      ['connectionModel', values.model === 'demo-small'],
+    ];
+    checks.forEach(([id, ok]) =>
+      $(id).classList.toggle('question-field-missing', !ok),
+    );
+    if (checks.every(([, ok]) => ok))
+      $(
+        savedConnection && sameConnection(savedConnection, values)
+          ? 'testConnection'
+          : 'saveConnection',
+      ).classList.add('question-field-missing');
+  }
+  if (index === 4) {
+    for (const [slot, expected] of Object.entries({
+      auth: 'auth',
+      key: 'model',
+      content: 'content',
+    }))
+      document
+        .querySelector('[data-slot="' + slot + '"]')
+        .classList.toggle('question-field-missing', slots[slot] !== expected);
+  }
+  if (index === 5) {
+    $('writeKey').classList.toggle(
+      'question-field-missing',
+      !validKeys.has($('writeKey').value.trim()),
+    );
+    $('jsonEditor').classList.toggle(
+      'question-field-missing',
+      Lesson.parseAndValidate($('jsonEditor').value).errors.length > 0,
+    );
+  }
+  if (first) {
+    first.setAttribute('tabindex', '-1');
+    first.focus({ preventScroll: true });
+    first.scrollIntoView({
+      behavior: reducedMotion() ? 'instant' : 'smooth',
+      block: 'center',
+    });
+  }
+}
+document.addEventListener('input', (event) =>
+  event.target.classList?.remove('question-field-missing'),
+);
 function rewardCorrectAnswer(id, element) {
   if (rewardedQuestions.has(id)) return;
   rewardedQuestions.add(id);
@@ -1139,6 +1328,76 @@ document.addEventListener('click', (event) => {
 });
 document.addEventListener('scroll', closeFieldHints, true);
 window.addEventListener('resize', closeFieldHints);
+function persistLearningState() {
+  const state = {
+    version: 1,
+    keys: keyRecords.map(({ key, label, createdAt, revoked }) => ({
+      key,
+      label,
+      createdAt,
+      revoked,
+    })),
+    tasks: Object.fromEntries(
+      taskIds.filter((id) => completedTasks.has(id)).map((id) => [id, true]),
+    ),
+  };
+  try {
+    window.localStorage.setItem(learningStorageKey, JSON.stringify(state));
+    $('storageStatus').textContent = '学习记录已保存在本机';
+  } catch {
+    $('storageStatus').textContent = '此浏览器未能保存学习记录';
+  }
+}
+function restoreLearningState() {
+  try {
+    const raw = window.localStorage.getItem(learningStorageKey);
+    if (!raw) return;
+    const state = JSON.parse(raw);
+    if (!state || state.version !== 1) return;
+    if (Array.isArray(state.keys))
+      for (const record of state.keys) {
+        if (
+          !record ||
+          typeof record.key !== 'string' ||
+          !/^demo-key-[0-9a-f]{16}$/.test(record.key) ||
+          typeof record.label !== 'string' ||
+          !record.label.trim() ||
+          record.label.length > 40 ||
+          typeof record.createdAt !== 'string' ||
+          !Number.isFinite(Date.parse(record.createdAt)) ||
+          typeof record.revoked !== 'boolean' ||
+          keyRecords.some((existing) => existing.key === record.key)
+        )
+          continue;
+        const key = {
+          key: record.key,
+          label: record.label,
+          createdAt: record.createdAt,
+          revoked: record.revoked,
+        };
+        keyRecords.push(key);
+        if (!key.revoked) validKeys.add(key.key);
+      }
+    if (
+      state.tasks &&
+      typeof state.tasks === 'object' &&
+      !Array.isArray(state.tasks)
+    )
+      for (const id of taskIds)
+        if (state.tasks[id] === true) completedTasks.add(id);
+    for (const [id, task] of Object.entries({
+      ui: 'app-connection',
+      drag: 'request-cards',
+      write: 'request-json',
+    }))
+      if (completedTasks.has(task)) completed.add(id);
+  } catch {}
+  renderKeyList();
+}
+restoreLearningState();
+practiceKeysReady = true;
+syncPracticeKey();
+updateProgress();
 const initial = /^#step-([0-7])$/.exec(location.hash);
 const requestedInitial = initial ? Number(initial[1]) : 0;
 goToChapter(firstIncompleteBefore(requestedInitial) ?? requestedInitial, false);

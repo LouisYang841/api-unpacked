@@ -239,7 +239,7 @@
           </p>
           <p>
             请依次完成：点击“创建密钥”→ 输入名称 → 确认创建 →
-            复制密钥。可以为不同应用分别创建密钥。
+            在弹窗中复制并保存密钥。可以为不同应用分别创建密钥。
           </p>
         </div>
         <div class="provider-console">
@@ -262,24 +262,7 @@
           <button class="primary" id="createKey" type="button">
             ＋ 创建 API 密钥
           </button>
-          <div id="keyReceipt" hidden>
-            <p id="issuedKeyLabel" class="issued-label">
-              已创建 · 本次练习可用
-            </p>
-            <label
-              >收到的 API Key<input
-                id="issuedKey"
-                value=""
-                readonly
-                autocomplete="off"
-                spellcheck="false" /></label
-            ><button id="copyKey" class="secondary" type="button">
-              复制密钥
-            </button>
-            <button id="revokeKey" class="text-button" type="button">
-              撤销当前查看的密钥
-            </button>
-          </div>
+
           <p id="keyIssueStatus" role="status">
             尚未创建密钥。请先点击上方按钮。
           </p>
@@ -288,7 +271,9 @@
               <strong>密钥列表</strong>
               <span id="keyCount">0 把有效 / 共创建 0 把</span>
             </p>
-            <p class="field-help">选择一条密钥进行查看、复制或撤销。</p>
+            <p class="field-help">
+              密钥列表显示名称、状态、创建时间及末尾字符。
+            </p>
             <ul id="keyList" class="key-list"></ul>
           </div>
         </div>
@@ -319,8 +304,7 @@
             Completions、Responses，还是两者都支持。之后填写地址、密钥并选择模型。
           </p>
           <p>
-            请按顺序操作：获取模型列表 → 选择模型 → 保存配置 → 检测连接 →
-            在聊天窗口点击“发送”。各按钮完成不同任务，请观察每一步的状态变化。
+            请依次获取模型列表、选择模型、保存配置并检测连接。检测通过后，本节练习即完成。聊天窗口可用于继续测试连接。
           </p>
         </div>
         <h3>观察示例：先确认接口类型</h3>
@@ -356,8 +340,7 @@
         <div class="remember">
           <b>接口选择</b>
           <p>
-            根据服务商提供的接口类型选择兼容格式。此服务支持 OpenAI 兼容的 Chat
-            Completions 和 Responses。
+            出现“连接成功”提示，即完成本节练习。聊天窗口会根据当前连接信息显示回复或错误。
           </p>
         </div>
         <div class="provider-facts">
@@ -379,7 +362,9 @@
           </li>
           <li>点击“获取模型列表”，再选择 demo-small。</li>
           <li>点击“保存配置”。保存成功后，再点击“检测连接”。</li>
-          <li>观察连接成功提示，然后到下方聊天窗口点击“发送”。</li>
+          <li>
+            检测通过后，本节练习即完成。可以继续在聊天窗口发送消息，观察请求结果。
+          </li>
         </ol>
         <div class="exercise" id="panel-ui">
           <div class="task">
@@ -493,8 +478,8 @@
                 >
                   ?</button
                 ><span role="tooltip" id="field-hint-5" class="hint-tooltip"
-                  >返回第 2
-                  步控制台，查看一把有效密钥，点击“复制密钥”，再回到这里粘贴。</span
+                  >粘贴你创建密钥时复制并保存的密钥值。需要新密钥时，返回第 2
+                  步创建。</span
                 ></span
               >
             </div>
@@ -583,11 +568,11 @@
                   value="用一句话解释彩虹。"
                   readonly
                   aria-label="本题已准备好的用户消息"
-                /><button id="sendChat" type="submit" class="primary" disabled>
+                /><button id="sendChat" type="submit" class="primary">
                   发送 ↑
                 </button>
               </div>
-              <small>检测连接成功后，即可发送本题消息。</small>
+              <small>填写连接信息后，可在这里发送消息。</small>
             </form>
           </div>
           <div class="response-placeholder" id="uiResponse">
@@ -669,7 +654,7 @@
         </div>
         <pre class="light-code">
 POST https://api.example.com/v1/chat/completions
-Authorization: Bearer <span data-issued-key="">demo-key-…（待领取）</span>
+Authorization: Bearer <span>YOUR_API_KEY</span>
 Content-Type: application/json
 
 { "model": "demo-small", "messages": [ ... ] }</pre>
@@ -835,8 +820,7 @@ Content-Type: application/json
                   >
                     ?</button
                   ><span role="tooltip" id="field-hint-10" class="hint-tooltip"
-                    >在第 2
-                    步创建密钥后，从卡片区找到对应的密钥卡片，拖到这里。</span
+                    >从卡片区选择你在连接设置中填写的密钥，拖到这里。</span
                   ></span
                 ></span
               ><br />Content-Type: application/json<br /><span
@@ -916,6 +900,18 @@ Content-Type: application/json
             <div class="chat-messages" id="chat-messages-drag">
               <p class="chat-empty">发送后，你的消息和模型回复会出现在这里。</p>
             </div>
+            <form id="scenarioForm-drag" class="chat-composer">
+              <label for="scenarioPrompt-drag">消息</label>
+              <div>
+                <input
+                  id="scenarioPrompt-drag"
+                  value="用一句话解释彩虹。"
+                  readonly
+                /><button id="scenarioSend-drag" class="primary" type="submit">
+                  发送 ↑
+                </button>
+              </div>
+            </form>
           </div>
           <div class="response-placeholder" id="dragResponse" hidden></div>
           <div id="feedback-drag" class="feedback" role="status"></div>
@@ -999,8 +995,8 @@ Content-Type: application/json
                 >
                   ?</button
                 ><span role="tooltip" id="field-hint-7" class="hint-tooltip"
-                  >返回第 2
-                  步控制台，复制一把状态为“有效”的密钥，再粘贴到这里。</span
+                  >粘贴创建时保存的有效密钥值。需要新密钥时，可返回第 2
+                  步创建。</span
                 ></span
               >
             </div>
@@ -1090,6 +1086,18 @@ Content-Type: application/json
             <div class="chat-messages" id="chat-messages-write">
               <p class="chat-empty">发送后，你的消息和模型回复会出现在这里。</p>
             </div>
+            <form id="scenarioForm-write" class="chat-composer">
+              <label for="scenarioPrompt-write">消息</label>
+              <div>
+                <input
+                  id="scenarioPrompt-write"
+                  value="用一句话解释月食。"
+                  readonly
+                /><button id="scenarioSend-write" class="primary" type="submit">
+                  发送 ↑
+                </button>
+              </div>
+            </form>
           </div>
           <div id="writeResponse" class="response-placeholder" hidden></div>
           <div id="feedback-write" class="feedback" role="status"></div>
@@ -1383,16 +1391,20 @@ Content-Type: application/json
           <span id="nextDescription">接下来：创建 API Key</span
           ><button
             id="nextStep"
-            class="primary is-locked"
-            disabled
-            aria-disabled="true"
+            class="primary"
+            aria-disabled="false"
             aria-describedby="pageRequirement"
           >
-            完成练习后继续 →
+            下一步：创建密钥 →
           </button>
         </div>
       </div>
-      <p class="book-footer">按步骤操作，完成每节练习后继续。</p>
+      <p class="book-footer">
+        按步骤操作，完成每节练习后继续。<br /><span
+          id="storageStatus"
+          role="status"
+        ></span>
+      </p>
     </main>
     <dialog
       id="keyNameDialog"
@@ -1447,6 +1459,44 @@ Content-Type: application/json
           ><button type="submit" class="primary">创建密钥</button>
         </div>
       </form>
+    </dialog>
+    <dialog
+      aria-describedby="keyRevealHelp"
+      aria-labelledby="keyRevealTitle"
+      class="console-dialog"
+      id="keyRevealDialog"
+    >
+      <div class="dialog-heading">
+        <h2 id="keyRevealTitle">密钥已创建</h2>
+        <button
+          id="closeKeyReveal"
+          type="button"
+          class="dialog-close"
+          aria-label="关闭密钥窗口"
+        >
+          ×
+        </button>
+      </div>
+      <p id="keyRevealHelp">
+        请现在复制并保存此密钥，关闭窗口后将无法再次查看。
+      </p>
+      <div id="keyReceipt" hidden>
+        <p id="issuedKeyLabel" class="issued-label">已创建 · 本次练习可用</p>
+        <label
+          >收到的 API Key<input
+            id="issuedKey"
+            value=""
+            readonly
+            autocomplete="off"
+            spellcheck="false" /></label
+        ><button id="copyKey" class="secondary" type="button">复制密钥</button>
+      </div>
+      <p id="keyCopyStatus" role="status"></p>
+      <div class="dialog-actions">
+        <button id="finishKeyReveal" type="button" class="primary">
+          已保存，关闭
+        </button>
+      </div>
     </dialog>
     <dialog
       id="revokeDialog"
