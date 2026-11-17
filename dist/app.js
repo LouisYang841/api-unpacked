@@ -28,6 +28,7 @@ const validKeys = new Set();
 const keyRecords = [];
 const completedKeys = new Map();
 const scenarioStates = new Map();
+const confettiSurfaces = new WeakMap();
 let fetchedConnection = null,
   savedConnection = null,
   connectionTested = false,
@@ -871,63 +872,71 @@ function flashSuccess(element) {
 function celebrate(element, questionId = '') {
   if (!element) return;
   flashSuccess(element);
-  if (reducedMotion()) return;
-  document
-    .querySelectorAll('.confetti-layer')
-    .forEach((layer) => layer.remove());
-  const width =
-    window.innerWidth || document.documentElement.clientWidth || 360;
-  const height =
-    window.innerHeight || document.documentElement.clientHeight || 720;
-  const rect = element.getBoundingClientRect?.() || {
-    left: 0,
-    top: height * 0.35,
-    width,
-    height: 40,
-  };
-  const x = Math.max(24, Math.min(width - 24, rect.left + rect.width / 2));
-  const y = Math.max(
-    40,
-    Math.min(height * 0.65, rect.top + Math.min(rect.height, 100) / 2),
-  );
-  const layer = document.createElement('span');
-  layer.className = 'celebration confetti-layer';
-  layer.dataset.questionId = questionId;
-  layer.setAttribute('aria-hidden', 'true');
-  const count = 48,
-    colors = ['#3b9ed7', '#e9b44c', '#65b78a', '#d77e9c', '#9e8bd3', '#ef8658'];
-  for (let i = 0; i < count; i++) {
-    const piece = document.createElement('i');
-    piece.className = 'confetti-piece';
-    piece.style.left = x + 'px';
-    piece.style.top = y + 'px';
-    const dx = (Math.random() - 0.5) * Math.min(560, width * 1.5);
-    piece.style.setProperty('--dx', dx + 'px');
-    piece.style.setProperty('--mid-x', dx * 0.45 + 'px');
-    piece.style.setProperty('--lift', -90 - Math.random() * 140 + 'px');
-    piece.style.setProperty('--fall', 140 + Math.random() * 170 + 'px');
-    piece.style.setProperty(
-      '--spin',
-      (i % 2 ? 1 : -1) * (180 + Math.random() * 540) + 'deg',
-    );
-    piece.style.setProperty('--duration', 1100 + Math.random() * 300 + 'ms');
-    piece.style.setProperty('--delay', Math.random() * 90 + 'ms');
-    piece.style.background = colors[i % colors.length];
-    piece.style.width = 5 + Math.random() * 5 + 'px';
-    piece.style.height = 7 + Math.random() * 6 + 'px';
-    piece.style.borderRadius = i % 4 === 0 ? '50%' : '1px';
-    layer.append(piece);
+  if (reducedMotion() || typeof window.confetti?.create !== 'function') return;
+  const host = element.closest?.('dialog[open]') || document.body;
+  let surface = confettiSurfaces.get(host);
+  let createdCanvas = null;
+  try {
+    if (!surface || !surface.canvas.isConnected) {
+      const canvas = document.createElement('canvas');
+      createdCanvas = canvas;
+      canvas.className = 'answer-confetti-canvas';
+      canvas.setAttribute('aria-hidden', 'true');
+      host.append(canvas);
+      if (!canvas.getContext('2d')) {
+        canvas.remove();
+        return;
+      }
+      const fire = window.confetti.create(canvas, {
+        resize: true,
+        useWorker: false,
+        disableForReducedMotion: true,
+      });
+      surface = { canvas, fire, generation: 0 };
+      confettiSurfaces.set(host, surface);
+    }
+    surface.canvas.dataset.questionId = questionId;
+    const width =
+      window.innerWidth || document.documentElement.clientWidth || 360;
+    const height =
+      window.innerHeight || document.documentElement.clientHeight || 720;
+    const rect = element.getBoundingClientRect();
+    const origin = {
+      x: Math.max(0.08, Math.min(0.92, (rect.left + rect.width / 2) / width)),
+      y: Math.max(
+        0.12,
+        Math.min(0.7, (rect.top + Math.min(rect.height, 100) / 2) / height),
+      ),
+    };
+    const generation = ++surface.generation;
+    const result = surface.fire({
+      particleCount: 90,
+      spread: 70,
+      origin,
+      ticks: 160,
+      zIndex: 3000,
+      disableForReducedMotion: true,
+    });
+    const cleanup = () => {
+      if (
+        confettiSurfaces.get(host) === surface &&
+        surface.generation === generation
+      ) {
+        confettiSurfaces.delete(host);
+        surface.fire.reset();
+        surface.canvas.remove();
+      }
+    };
+    if (result && typeof result.then === 'function')
+      result.then(cleanup, cleanup);
+    else window.setTimeout(cleanup, 3000);
+  } catch {
+    try {
+      surface?.fire.reset();
+    } catch {}
+    (surface?.canvas || createdCanvas)?.remove();
+    confettiSurfaces.delete(host);
   }
-  let finished = 0;
-  layer.addEventListener('animationend', (event) => {
-    if (
-      event.target.classList.contains('confetti-piece') &&
-      ++finished >= count
-    )
-      layer.remove();
-  });
-  (element.closest?.('dialog[open]') || document.body).append(layer);
-  window.setTimeout(() => layer.remove(), 1700);
 }
 function stopScenario(id, message = '等待你完成请求设置。') {
   const state = scenarioStates.get(id);
